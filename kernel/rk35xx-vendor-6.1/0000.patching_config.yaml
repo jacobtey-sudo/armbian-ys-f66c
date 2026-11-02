@@ -1,0 +1,26 @@
+# Patching config for the vendor rk35xx (Rockchip BSP 6.1) kernel patch dir.
+#
+# Needed because the framework's own copy of this file was DELETED in
+# armbian/build commit 51d1cc65d ("rockchip vendor: drop rkr patches from framework
+# and merge directly into armbian/linux-rockchip"). Without it:
+#   - userpatches/kernel/rk35xx-vendor-6.1/dt/*.dts is never copied into the kernel tree
+#   - the DT Makefile is never auto-patched, so the board DTB is never built
+# The patcher looks for "0000.patching_config.yaml" at the root of each patch dir
+# ('userpatches/kernel/<KERNELPATCHDIR>' and 'patch/kernel/<KERNELPATCHDIR>'); if the
+# core one exists, only the FIRST file found is used (core, then user) - since core
+# no longer ships one for this dir, this file is the effective config.
+config:
+
+  # Info only; not used by the patching scripts
+  name: rk35xx-6.1
+  kind: kernel
+  type: vendor
+  branch: rk-6.1-rkr7.2
+
+  # .dts/.dtsi files in these dirs are copied as-is into the build tree (later overwrite earlier)
+  dts-directories:
+    - { source: "dt", target: "arch/arm64/boot/dts/rockchip" }
+
+  # Automatically patch the Makefile in the target dir to build the copied DTS files
+  auto-patch-dt-makefile:
+    - { incremental: true, directory: "arch/arm64/boot/dts/rockchip", config-var: "CONFIG_ARCH_ROCKCHIP" }
