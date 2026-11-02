@@ -728,8 +728,14 @@
 		 * поднимает его сам в prepare(), сразу после power-supply.
 		 */
 		enable-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
+		/* ВАЖНО: пин 3.3 В (PB2, группа lcd_pwr_en) держит регулятор
+		 * vcc_lcd_pwr. Панель не должна его запрашивать, иначе pinctrl
+		 * падает с -EBUSY ("pin gpio2-10 already requested by
+		 * vcc-lcd-pwr") и probe панели откладывается навсегда (-517).
+		 * Поэтому в pinctrl-0 только PB1 (1.8 В) и reset.
+		 */
 		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_1v8_en &lcd_pwr_en &lcd_reset_pin>;
+		pinctrl-0 = <&lcd_1v8_en &lcd_reset_pin>;
 		reset-gpios = <&gpio3 RK_PD4 GPIO_ACTIVE_HIGH>;
 		reset-delay-ms = <200>;
 		enable-delay-ms = <60>;
