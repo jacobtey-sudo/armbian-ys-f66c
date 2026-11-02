@@ -1,9 +1,22 @@
 BOARD_NAME="Yisheng YS-F66C"
-BOARDFAMILY="rockchip64"
-BOARD_MAINTAINER="Your_Name"
-KERNEL_TARGET="current"
+BOARDFAMILY="rk35xx"
+BOARD_MAINTAINER="ys-f66c"
+KERNEL_TARGET="vendor"
 BOOT_SOC="rk3566"
 BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
+
+# Own bootenv file. It shows the full kernel log on the UART (verbosity=7)
+# and enables earlycon on uart2 for bring-up.
+function post_family_config__ys_f66c_bootenv() {
+    declare -g BOOTENV_FILE="ys-f66c.txt"
+}
+
+# Pin the vendor kernel to the validated commit. Branch rk-6.1-rkr7.2 moves often.
+# A moving branch changes the kernel artifact hash, so it forces full rebuilds.
+function post_family_config__ys_f66c_pin_kernel_commit() {
+    display_alert "$BOARD" "Pinning vendor kernel to commit a21efef" "info"
+    declare -g KERNELBRANCH="commit:a21efefcf2b5731d1df0505ddf725af6e5530cfb"
+}
 
 function post_family_config__ys_f66c_use_mainline_uboot() {
     display_alert "$BOARD" "Using mainline U-Boot for $BOARD / $BRANCH" "info"
