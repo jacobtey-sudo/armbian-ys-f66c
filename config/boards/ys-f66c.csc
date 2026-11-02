@@ -18,6 +18,26 @@ function post_family_config__ys_f66c_pin_kernel_commit() {
     declare -g KERNELBRANCH="commit:a21efefcf2b5731d1df0505ddf725af6e5530cfb"
 }
 
+# Драйверы панели и подсветки обязаны быть встроенными (=y), а не модулями.
+# DSI-хост ищет панель в своём probe, задолго до монтирования rootfs. Пока
+# драйвер панели лежит модулем в rootfs, drm_of_find_panel_or_bridge()
+# возвращает -EPROBE_DEFER, DRM-подсистема зацикливается на повторном
+# probe и загрузка никогда не доходит до init (проверено на UART 02.11.2026).
+function custom_kernel_config__ys_f66c_display_builtin() {
+	# Анонс правок в хэш-массиве нужен в ОБЕИХ фазах вызова хука.
+	# Во второй фазе .config ещё нет — если анонсировать только внутри
+	# "if [[ -f .config ]]", версия артефакта ядра не меняется, Armbian
+	# берёт ядро из кэша и правки .config никуда не попадают (проверено
+	# 02.11.2026: сборка молча использовала старое ядро).
+	kernel_config_modifying_hashes+=("DRM_PANEL_SIMPLE=y")
+	kernel_config_modifying_hashes+=("BACKLIGHT_PWM=y")
+	if [[ -f .config ]]; then
+		display_alert "$BOARD" "Display drivers built into the kernel" "info"
+		kernel_config_set_y "DRM_PANEL_SIMPLE"
+		kernel_config_set_y "BACKLIGHT_PWM"
+	fi
+}
+
 function post_family_config__ys_f66c_use_mainline_uboot() {
     display_alert "$BOARD" "Using mainline U-Boot for $BOARD / $BRANCH" "info"
     declare -g BOOTSOURCE="https://github.com/u-boot/u-boot.git"

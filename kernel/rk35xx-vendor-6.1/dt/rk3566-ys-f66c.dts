@@ -109,20 +109,13 @@
 		vin-supply = <&vcc3v3_sys>;
 	};
 
-	/* Питание панели: 1.8V rail (vendor: enable18, GPIO2_B1) */
-	vcc_lcd_1v8: vcc-lcd-1v8 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc_lcd_1v8";
-		regulator-boot-on;
-		regulator-always-on;
-		enable-active-high;
-		gpio = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_1v8_en>;
-		vin-supply = <&vcc3v3_sys>;
-		startup-delay-us = <20000>;
-	};
-
+	/* 1.8V-рейл панели (вендорский enable18, GPIO2_B1) намеренно НЕ сделан
+	 * отдельным regulator-fixed: рейл включает сам драйвер панели через
+	 * enable-gpios в panel_simple_prepare(), то есть гарантированно до
+	 * подачи reset и init-последовательности. Отдельный "always-on"
+	 * регулятор поднимался бы только в regulator_late_cleanup()
+	 * (late_initcall_sync), что может случиться уже после probe панели.
+	 */
 	backlight1: backlight1 {
 		compatible = "pwm-backlight";
 		pwms = <&pwm5 0 25000 0>;
@@ -727,7 +720,14 @@
 		compatible = "simple-panel-dsi";
 		reg = <0>;
 		backlight = <&backlight1>;
+		/* 3.3V-рейл панели (вендорский enable33, GPIO2_B2): регулятор
+		 * включается драйвером перед init-последовательностью.
+		 */
 		power-supply = <&vcc_lcd_pwr>;
+		/* 1.8V-рейл панели (вендорский enable18, GPIO2_B1): драйвер
+		 * поднимает его сам в prepare(), сразу после power-supply.
+		 */
+		enable-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_1v8_en &lcd_pwr_en &lcd_reset_pin>;
 		reset-gpios = <&gpio3 RK_PD4 GPIO_ACTIVE_HIGH>;
@@ -875,24 +875,35 @@
 			01 29 15 00 02 35 00
 		];
 
-		/* Exit sequence: DISPLAY OFF -> SLEEP IN */
+		/* Exit sequence: пауза 30 мс -> DISPLAY OFF (0x28),
+		 * пауза 100 мс -> SLEEP IN (0x10).
+		 * Байты взяты из panel-exitcode224 вендорского DTS.
+		 */
 		panel-exit-sequence = [
-			05 00 01 28
-			05 00 01 10
+			05 1e 01 28
+			05 64 01 10
 		];
 
+		/* Тайминги панели — ровно из delay_and_timing224 вендорского DTS
+		 * (а не из узла dsi1_panel, где лежит «заглушка» 20/52/20, 4/8/4
+		 * при 69 МГц). Проверено по логу рабочей Android-прошивки на этой
+		 * же плате: активный режим был
+		 *   clock 70000 kHz, H: 0800 0860 0890 0930, V: 1280 1298 1302 1314
+		 * то есть hfront=60, hsync=30, hback=40, vfront=18, vsync=4,
+		 * vback=12. pinclock ровно 70 МГц (0x42c1d80).
+		 */
 		display-timings {
 			native-mode = <&timing_mipi>;
 
 			timing_mipi: timing_mipi {
-				clock-frequency = <69000000>;
+				clock-frequency = <70000000>;
 				hactive = <800>;
 				vactive = <1280>;
-				hback-porch = <20>;
-				hfront-porch = <52>;
-				vback-porch = <4>;
-				vfront-porch = <8>;
-				hsync-len = <20>;
+				hback-porch = <40>;
+				hfront-porch = <60>;
+				vback-porch = <12>;
+				vfront-porch = <18>;
+				hsync-len = <30>;
 				vsync-len = <4>;
 				hsync-active = <0>;
 				vsync-active = <0>;

@@ -1,4 +1,9 @@
 verbosity=7
 bootlogo=false
 console=both
-extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000,1500000n8
+# earlycon без указания скорости: 8250-раннер считает делитель по опорным
+# 1,8432 МГц, а у RK3566 UART-клок 24 МГц — с явной скоростью вывод мусорный.
+# Без скорости раннер сохраняет настройки U-Boot (1500000 8N1).
+# nokaslr: с включённым KASLR вендорное ядро 6.1 на этой плате не выдаёт
+# ни строки и не доходит до init (проверено 02.11.2026).
+extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000 nokaslr
