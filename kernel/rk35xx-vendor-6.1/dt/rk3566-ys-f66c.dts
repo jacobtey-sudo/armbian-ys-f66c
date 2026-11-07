@@ -610,7 +610,14 @@
 
 &usbdrd30 {
 	status = "okay";
-	dr_mode = "host";
+};
+
+/* Дочерний узел - сам контроллер. Без него родительский status не работает,
+ * и устройство fcc00000.dwc3 не создаётся. phys тут обязателен: во вендорском
+ * rk356x.dtsi у дочернего OTG-узла phys нет. */
+&usbdrd_dwc3 {
+	status = "okay";
+	dr_mode = "otg";
 	phys = <&u2phy0_otg>;
 	phy-names = "usb2-phy";
 	extcon = <&usb2phy0>;
@@ -619,10 +626,11 @@
 
 &usbhost30 {
 	status = "okay";
+};
+
+&usbhost_dwc3 {
+	status = "okay";
 	dr_mode = "host";
-	phys = <&u2phy0_host>, <&combphy1_usq PHY_TYPE_USB3>;
-	phy-names = "usb2-phy", "usb3-phy";
-	maximum-speed = "super-speed";
 };
 
 /* ВАЖНО: включаем combphy1, иначе USB3 (usbhost30) не инициализируется */
