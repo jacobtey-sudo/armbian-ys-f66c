@@ -6,4 +6,6 @@ console=both
 # Без скорости раннер сохраняет настройки U-Boot (1500000 8N1).
 # nokaslr: с включённым KASLR вендорное ядро 6.1 на этой плате не выдаёт
 # ни строки и не доходит до init (проверено 02.11.2026).
-extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000 nokaslr
+# fsck.mode=force fsck.repair=yes: авто-ремонт ФС при загрузке. Обрыв питания
+# повреждает ext4, а preen (fsck -a) не чинит и роняет загрузку.
+extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000 nokaslr fsck.mode=force fsck.repair=yes
