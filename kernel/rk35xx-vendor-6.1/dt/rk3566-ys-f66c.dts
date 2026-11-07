@@ -602,10 +602,12 @@
 
 &u2phy1_host {
 	status = "okay";
+	phy-supply = <&vcc5v0_host>;
 };
 
 &u2phy1_otg {
 	status = "okay";
+	phy-supply = <&vcc5v0_host>;
 };
 
 &usbdrd30 {
@@ -617,11 +619,10 @@
  * rk356x.dtsi у дочернего OTG-узла phys нет. */
 &usbdrd_dwc3 {
 	status = "okay";
-	dr_mode = "otg";
-	phys = <&u2phy0_otg>;
-	phy-names = "usb2-phy";
-	extcon = <&usb2phy0>;
-	maximum-speed = "high-speed";
+	dr_mode = "host";
+	/* В rk3566.dtsi этот узел жёстко привязан к extcon, который
+	 * уводит OTG-порт в device при виде «зарядника». Убираем. */
+	/delete-property/ extcon;
 };
 
 &usbhost30 {
