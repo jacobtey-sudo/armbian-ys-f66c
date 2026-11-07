@@ -96,26 +96,20 @@
 		pinctrl-0 = <&vcc5v0_otg_en>;
 	};
 
-	/* Питание панели: 3.3V rail (vendor: enable33, GPIO2_B2) */
-	vcc_lcd_pwr: vcc-lcd-pwr {
+	/* Питание панели: 1.8V I/O-рейл (вендорский enable18, GPIO2_B1).
+	 * Вендор поднимает 1.8V ПЕРЕД 3.3V. panel_simple включает
+	 * power-supply первым, затем enable-gpios (3.3V). */
+	vcc_lcd_1v8: vcc-lcd-1v8 {
 		compatible = "regulator-fixed";
-		regulator-name = "vcc_lcd_pwr";
-		regulator-boot-on;
-		regulator-always-on;
+		regulator-name = "vcc_lcd_1v8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
 		enable-active-high;
-		gpio = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
+		gpio = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_pwr_en>;
+		pinctrl-0 = <&lcd_1v8_en>;
 		vin-supply = <&vcc3v3_sys>;
 	};
-
-	/* 1.8V-рейл панели (вендорский enable18, GPIO2_B1) намеренно НЕ сделан
-	 * отдельным regulator-fixed: рейл включает сам драйвер панели через
-	 * enable-gpios в panel_simple_prepare(), то есть гарантированно до
-	 * подачи reset и init-последовательности. Отдельный "always-on"
-	 * регулятор поднимался бы только в regulator_late_cleanup()
-	 * (late_initcall_sync), что может случиться уже после probe панели.
-	 */
 	backlight1: backlight1 {
 		compatible = "pwm-backlight";
 		pwms = <&pwm5 0 25000 0>;
@@ -720,22 +714,14 @@
 		compatible = "simple-panel-dsi";
 		reg = <0>;
 		backlight = <&backlight1>;
-		/* 3.3V-рейл панели (вендорский enable33, GPIO2_B2): регулятор
-		 * включается драйвером перед init-последовательностью.
-		 */
-		power-supply = <&vcc_lcd_pwr>;
-		/* 1.8V-рейл панели (вендорский enable18, GPIO2_B1): драйвер
-		 * поднимает его сам в prepare(), сразу после power-supply.
-		 */
-		enable-gpios = <&gpio2 RK_PB1 GPIO_ACTIVE_HIGH>;
-		/* ВАЖНО: пин 3.3 В (PB2, группа lcd_pwr_en) держит регулятор
-		 * vcc_lcd_pwr. Панель не должна его запрашивать, иначе pinctrl
-		 * падает с -EBUSY ("pin gpio2-10 already requested by
-		 * vcc-lcd-pwr") и probe панели откладывается навсегда (-517).
-		 * Поэтому в pinctrl-0 только PB1 (1.8 В) и reset.
-		 */
+		/* 1.8V-рейл (вендорский enable18, GPIO2_B1): power-supply.
+		 * panel_simple включает его первым. */
+		power-supply = <&vcc_lcd_1v8>;
+		/* 3.3V-рейл (вендорский enable33, GPIO2_B2): enable-gpios.
+		 * Драйвер поднимает его вторым, сразу после 1.8V. */
+		enable-gpios = <&gpio2 RK_PB2 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&lcd_1v8_en &lcd_reset_pin>;
+		pinctrl-0 = <&lcd_pwr_en &lcd_reset_pin>;
 		reset-gpios = <&gpio3 RK_PD4 GPIO_ACTIVE_HIGH>;
 		reset-delay-ms = <200>;
 		enable-delay-ms = <60>;
@@ -992,5 +978,18 @@
 		tp_rst: tp-rst {
 			rockchip,pins = <3 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
+	};
+};
+
+/* Диагностика: EEPROM дисплея (at24c08 @0x50) на i2c4.
+ * Вендорский U-Boot читает оттуда disp_param (lcd_mipi_param).
+ * Включаем шину, чтобы прочитать параметр панели из Linux.
+ */
+&i2c4 {
+	status = "okay";
+
+	eeprom@50 {
+		compatible = "at,24c08";
+		reg = <0x50>;
 	};
 };
