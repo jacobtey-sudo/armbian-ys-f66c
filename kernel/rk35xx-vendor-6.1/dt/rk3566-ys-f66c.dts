@@ -488,7 +488,8 @@
 			assigned-clock-parents = <&cru I2S1_MCLKOUT_TX>, <&cru I2S1_MCLKOUT_TX>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&i2s1m0_mclk>;
-			spk-ctl-gpios = <&gpio3 RK_PA5 GPIO_ACTIVE_HIGH>;
+			out-l2spk-r2hp;
+			spk-ctl-gpios = <&gpio2 RK_PC6 GPIO_ACTIVE_LOW>;
 			hp-volume = <28>;
 			spk-volume = <28>;
 			capture-volume = <0>;
