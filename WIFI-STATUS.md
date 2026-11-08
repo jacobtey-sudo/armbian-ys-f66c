@@ -112,6 +112,23 @@ curl --interface wlan0 https://www.google.com → http=200
 (`aicbsp_dummy_sdmmc ... error -123`) — карта остаётся в плохом состоянии,
 нужен reboot.
 
+## Стабильность (для этой сети)
+
+AP «ExampleNet» вещает WPA2/WPA3 transition + PMF. При свободном роуминге между
+BSSID и включённом PMF ассоциация рвётся на 4-way handshake
+(`rwnx_rx_sm_disconnect_ind reason code:2`; NetworkManager:
+`disconnected during association, asking for new key` → `no secrets`).
+Рабочая настройка (BSSID — конкретно этого AP):
+
+```bash
+nmcli connection modify examplenet 802-11-wireless.bssid 00:11:22:33:44:77
+nmcli connection modify examplenet wifi-sec.pmf 3     # PMF disabled, WPA2-PSK
+nmcli connection up examplenet
+```
+
+После этого — **30/30 пингов за 60 с, 0% потерь**, сигнал −66 dBm, `https=200`.
+Логин/пароль сети — пользовательские, в userpatches не кладутся.
+
 ## Артефакты
 
 * `dt/rk3566-ys-f66c.dts` — `&sdmmc1 { max-frequency = <50000000>; }`
