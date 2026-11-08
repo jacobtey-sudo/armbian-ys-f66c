@@ -131,7 +131,26 @@ bluetoothctl show
 bluetoothctl --timeout 20 scan on
 ```
 
+## Проверка звука (08.11.2026, наушники BW-HP2)
+
+Наушники `BW-HP2` (`6F:2D:90:50:0B:A8`, class `audio-headset`) сопряжены,
+trusted, подключены. PulseAudio (сессия `sddm`) создал
+`bluez_sink.6F_2D_90_50_0B_A8.a2dp_sink` (SBC, 44.1 кГц, stereo) и сделал его
+дефолтным. Проверено на слух:
+
+* **A2DP** — стерео, левый/правый каналы (`speaker-test`, 1 кГц);
+* **HFP** (`handsfree_head_unit`) — моно 8 кГц, слышно в обоих.
+
+Транспорт BlueZ при проигрывании переходит в `active`, громкость `127`.
+
+Полезно: PulseAudio на плате крутится под пользователем `sddm` (greeter),
+поэтому `pactl` надо запускать так:
+
+```bash
+sudo -u sddm env XDG_RUNTIME_DIR=/run/user/113 \
+  PULSE_SERVER=unix:/run/user/113/pulse/native pactl list short sinks
+```
+
 ## Дальше
 
-Сопряжение с реальным устройством (наушники/колонка) и проверка A2DP —
-это уже стыкуется с отложенной задачей «звук/запись».
+Звук/запись (микрофон rk809, запись с BT-гарнитуры) — отложенная задача.
