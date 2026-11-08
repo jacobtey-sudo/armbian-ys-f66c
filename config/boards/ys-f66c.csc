@@ -5,6 +5,15 @@ KERNEL_TARGET="vendor"
 BOOT_SOC="rk3566"
 BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 
+# AIC8800 SDIO WiFi+BT. The chip reports SDIO vendor 0xc8a1 (AIC8800D80),
+# not the Broadcom "ap6212" that the vendor DTS claims. The Radxa DKMS
+# package patches the SDIO firmware path to
+# /lib/firmware/aic8800_fw/SDIO/<chip>, so no modprobe options are needed.
+# DKMS builds the modules in the chroot against the vendor kernel headers.
+# Verified on hardware 08.11.2026: wlan0 up, HE (Wi-Fi 6), ping/HTTP/HTTPS OK.
+AIC8800_TYPE="sdio"
+enable_extension "radxa-aic8800"
+
 # Own bootenv file. It shows the full kernel log on the UART (verbosity=7)
 # and enables earlycon on uart2 for bring-up.
 function post_family_config__ys_f66c_bootenv() {
