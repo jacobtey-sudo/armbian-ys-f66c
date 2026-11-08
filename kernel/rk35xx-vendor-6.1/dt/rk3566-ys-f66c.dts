@@ -166,6 +166,25 @@
 		reset-gpios = <&gpio0 RK_PC5 GPIO_ACTIVE_LOW>;
 	};
 
+	/* AIC8800 Bluetooth power/wake, driven by the Rockchip rfkill-bt
+	 * driver (compatible bluetooth-platdata). Pin map from the Android DT:
+	 * reset = GPIO1_D1, wake = GPIO0_C7, host wake irq = GPIO1_D2,
+	 * UART RTS = GPIO2_B5 (active low).
+	 */
+	wireless_bluetooth: wireless-bluetooth {
+		compatible = "bluetooth-platdata";
+		clocks = <&rk809 1>;
+		clock-names = "ext_clock";
+		uart_rts_gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_LOW>;
+		pinctrl-names = "default", "rts_gpio";
+		pinctrl-0 = <&uart1m0_rtsn>;
+		pinctrl-1 = <&uart1_gpios>;
+		BT,reset_gpio = <&gpio1 RK_PD1 GPIO_ACTIVE_HIGH>;
+		BT,wake_gpio = <&gpio0 RK_PC7 GPIO_ACTIVE_HIGH>;
+		BT,wake_host_irq = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+
 	hdmi_sound: hdmi-sound {
 		compatible = "simple-audio-card";
 		simple-audio-card,format = "i2s";
@@ -584,6 +603,20 @@
 	pinctrl-0 = <&uart2m0_xfer>;
 };
 
+/* AIC8800 Bluetooth HCI on uart1 (m0). The serdev child binds hci_uart's
+ * AIC protocol (CONFIG_BT_HCIUART_AIC). The RTS pin is owned by
+ * wireless_bluetooth above.
+ */
+&uart1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
+
+	bluetooth {
+		compatible = "cvte,aic8800-bt";
+	};
+};
+
 &usb2phy0 {
 	status = "okay";
 };
@@ -930,6 +963,12 @@
 
 		tp_rst: tp-rst {
 			rockchip,pins = <3 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	wireless-bluetooth {
+		uart1_gpios: uart1-gpios {
+			rockchip,pins = <2 RK_PB5 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 };

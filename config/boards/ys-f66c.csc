@@ -14,6 +14,36 @@ BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 AIC8800_TYPE="sdio"
 enable_extension "radxa-aic8800"
 
+# AIC8800 Bluetooth. Kernel 6.1 ships CONFIG_BT_HCIUART_AIC, which attaches
+# hci0 through the serdev node "cvte,aic8800-bt" on uart1 (see the DTS) --
+# no hciattach needed. The Rockchip rfkill-bt driver powers the chip off
+# (soft-blocked) at boot, so unblock it once the system is up; otherwise
+# BlueZ keeps hci0 down. Verified on hardware 08.11.2026: hci0 AIC8820,
+# HCI 5.4, scan finds nearby devices.
+function post_family_tweaks_bsp__ys_f66c_bt_unblock() {
+	display_alert "$BOARD" "Installing YS-F66C BT rfkill unblock service" "info"
+	install -d -m 0755 "${destination}/usr/lib/systemd/system"
+	cat > "${destination}/usr/lib/systemd/system/ys-f66c-bt-unblock.service" <<-'EOT'
+		[Unit]
+		Description=Unblock AIC8800 Bluetooth rfkill (YS-F66C)
+		After=bluetooth.service
+		Wants=bluetooth.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/sbin/rfkill unblock bluetooth
+		RemainAfterExit=yes
+
+		[Install]
+		WantedBy=multi-user.target
+	EOT
+}
+
+function post_family_tweaks__ys_f66c_enable_bt_unblock() {
+	display_alert "$BOARD" "Enabling YS-F66C BT rfkill unblock service" "info"
+	chroot_sdcard systemctl --no-reload enable ys-f66c-bt-unblock.service
+}
+
 # Own bootenv file. It shows the full kernel log on the UART (verbosity=7)
 # and enables earlycon on uart2 for bring-up.
 function post_family_config__ys_f66c_bootenv() {
