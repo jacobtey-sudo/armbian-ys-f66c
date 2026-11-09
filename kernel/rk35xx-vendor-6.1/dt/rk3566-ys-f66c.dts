@@ -135,7 +135,7 @@
 		compatible = "usb-host-power-gpio";
 		pinctrl-names = "default";
 		pinctrl-0 = <&default_usb_gpio_host_level>;
-		usb_hub_gpio = <&gpio1 RK_PC3 GPIO_ACTIVE_HIGH>;
+		usb_hub_gpio = <&gpio1 RK_PD3 GPIO_ACTIVE_HIGH>;
 		vcc_host2 = <&gpio3 RK_PA1 GPIO_ACTIVE_HIGH>;
 		vcc_host_drv3_gpio = <&gpio3 RK_PA3 GPIO_ACTIVE_HIGH>;
 		vcc_host_drv5_gpio = <&gpio3 RK_PA4 GPIO_ACTIVE_HIGH>;
@@ -934,7 +934,7 @@
 
 	default_usb_gpio_host_level {
 		default_usb_gpio_host_level: default-usb-gpio-host-level {
-			rockchip,pins = <1 RK_PC3 RK_FUNC_GPIO &pcfg_pull_none>;
+			rockchip,pins = <1 RK_PD3 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
@@ -1082,5 +1082,42 @@
 			reg = <0>;
 			remote-endpoint = <&dphy0_out>;
 		};
+	};
+};
+
+/*
+ * Питание USB-хаба и портов хоста. Вендор включает его драйвером
+ * "usb-host-power-gpio", которого нет в ядре 6.1. Держим линии сами.
+ * Для USB-камеры нужны usb_hub_gpio (gpio1 RK_PD3) и vcc_host_drv3 (gpio3 RK_PA3).
+ */
+&gpio1 {
+	usb-hub-power-hog {
+		gpio-hog;
+		gpios = <RK_PD3 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb-hub-power";
+	};
+};
+
+&gpio3 {
+	usb-host-power2-hog {
+		gpio-hog;
+		gpios = <RK_PA1 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb-host-power2";
+	};
+
+	usb-host-power-drv3-hog {
+		gpio-hog;
+		gpios = <RK_PA3 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb-host-power-drv3";
+	};
+
+	usb-host-power-drv5-hog {
+		gpio-hog;
+		gpios = <RK_PA4 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb-host-power-drv5";
 	};
 };
