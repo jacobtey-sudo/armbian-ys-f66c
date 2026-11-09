@@ -93,24 +93,24 @@ function post_family_config__ys_f66c_use_mainline_uboot() {
     }
 }
 
-# Power button opens the XFCE logout dialog (Log Out / Restart / Shut Down).
-# xfce4-power-manager handles the key itself (it inhibits logind's power key),
-# but its default action is "do nothing". XFPM_ASK == 3.
+# Power button (short press) opens the KDE logout / shutdown dialog.
+# powerdevil handles the key itself and inhibits logind's power key.
+# PowerDevil::PowerButtonAction::PromptLogoutDialog == 16.
 function post_family_tweaks__ys_f66c_power_button() {
-	display_alert "$BOARD" "XFCE power button -> shutdown menu" "info"
-	local f="${SDCARD}/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml"
-	install -d -m 0755 "$(dirname "$f")"
-	cat > "$f" <<-'EOT'
-		<?xml version="1.0" encoding="UTF-8"?>
-		<channel name="xfce4-power-manager" version="1.0">
-		  <property name="xfce4-power-manager" type="empty">
-		    <property name="power-button-action" type="uint" value="3"/>
-		  </property>
-		</channel>
-	EOT
+	display_alert "$BOARD" "KDE power button -> logout/shutdown dialog" "info"
 	local g
-	for g in "${SDCARD}/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml" \
-	         "${SDCARD}"/home/*/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml; do
-		[[ -f $g ]] && sed -i 's#<property name="power-button-action" type="empty"/>#<property name="power-button-action" type="uint" value="3"/>#' "$g"
+	for g in "${SDCARD}/etc/xdg/powerdevilrc" \
+	         "${SDCARD}/etc/skel/.config/powerdevilrc"; do
+		install -d -m 0755 "$(dirname "$g")"
+		cat > "$g" <<-'EOT'
+			[AC][SuspendAndShutdown]
+			PowerButtonAction=16
+			
+			[Battery][SuspendAndShutdown]
+			PowerButtonAction=16
+			
+			[LowBattery][SuspendAndShutdown]
+			PowerButtonAction=16
+		EOT
 	done
 }
