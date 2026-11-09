@@ -499,20 +499,23 @@
 	};
 };
 
-/* Touchscreen: Goodix GT9xx on I2C1 (fe5a0000), addr 0x5d, INT GPIO3_B6, RST GPIO3_B7 */
+/* Touchscreen: Goodix GT9271 on I2C1 (fe5a0000), addr 0x5d.
+ * Pins from the vendor DTB: INT GPIO3_C6 (pull-up), RST GPIO3_C7.
+ * The vendor gt9xx driver reads "touch-gpio" and "reset-gpio".
+ */
 &i2c1 {
 	status = "okay";
 
 	gt9xx: touchscreen@5d {
 		compatible = "goodix,gt9xx";
 		reg = <0x5d>;
-		interrupt-parent = <&gpio3>;
-		interrupts = <RK_PB6 IRQ_TYPE_LEVEL_LOW>;
-		/* Vendor property names for GT9xx driver */
-		goodix,irq-gpio = <&gpio3 RK_PB6 GPIO_ACTIVE_HIGH>;
-		goodix,rst-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&tp_int &tp_rst>;
+		touch-gpio = <&gpio3 RK_PC6 IRQ_TYPE_LEVEL_LOW>;
+		reset-gpio = <&gpio3 RK_PC7 GPIO_ACTIVE_HIGH>;
+		max-x = <1280>;
+		max-y = <800>;
+		tp-size = <9271>;
 	};
 };
 
@@ -959,11 +962,11 @@
 
 	touch {
 		tp_int: tp-int {
-			rockchip,pins = <3 RK_PB6 RK_FUNC_GPIO &pcfg_pull_up>;
+			rockchip,pins = <3 RK_PC6 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 
 		tp_rst: tp-rst {
-			rockchip,pins = <3 RK_PB7 RK_FUNC_GPIO &pcfg_pull_none>;
+			rockchip,pins = <3 RK_PC7 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 
