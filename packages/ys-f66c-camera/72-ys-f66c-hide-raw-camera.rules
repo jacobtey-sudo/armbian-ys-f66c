@@ -1,0 +1,6 @@
+# Hide the raw (unrotated) built-in UVC camera from desktop applications.
+# Two camera modules exist: 1b17:0211 (first batch) and 0bda:2161 (second batch).
+# The rotated virtual camera /dev/video10 is provided by
+# ys-f66c-camera-rotate.service.
+SUBSYSTEM=="video4linux", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1b17", ATTRS{idProduct}=="0211", TAG-="uaccess", GROUP="root", MODE="0600"
+SUBSYSTEM=="video4linux", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2161", TAG-="uaccess", GROUP="root", MODE="0600"

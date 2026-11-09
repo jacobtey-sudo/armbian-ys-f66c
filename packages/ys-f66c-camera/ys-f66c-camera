@@ -1,0 +1,9 @@
+# YS-F66C virtual camera settings.
+# ROTATE: none | clockwise | counterclockwise | rotate-180
+# (the UVC sensor is mounted portrait, so the raw picture is turned 90°;
+#  "clockwise" makes it upright on the landscape screen)
+ROTATE=clockwise
+# Capture mode. 640x480@30 is the lightest smooth mode (no JPEG decoding).
+WIDTH=640
+HEIGHT=480
+FPS=30

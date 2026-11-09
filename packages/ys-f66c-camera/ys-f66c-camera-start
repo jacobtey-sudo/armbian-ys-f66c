@@ -1,0 +1,11 @@
+#!/bin/sh
+# Feeds a rotated copy of the built-in UVC camera into /dev/video10
+# (v4l2loopback virtual camera). All apps, including Kamoso, can use it.
+. /etc/default/ys-f66c-camera
+
+exec /usr/bin/gst-launch-1.0 -e \
+	v4l2src device=/dev/video0 ! \
+	video/x-raw,format=YUY2,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1,interlace-mode=progressive,colorimetry=2:4:5:1 ! \
+	videoflip method=${ROTATE} ! \
+	videoconvert ! \
+	v4l2sink device=/dev/video10 sync=false

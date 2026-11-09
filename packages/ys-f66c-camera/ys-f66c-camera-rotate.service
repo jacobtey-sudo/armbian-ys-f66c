@@ -1,0 +1,12 @@
+[Unit]
+Description=YS-F66C rotated virtual camera (UVC portrait sensor)
+After=local-fs.target
+
+[Service]
+ExecStartPre=/sbin/modprobe v4l2loopback
+ExecStart=/usr/local/sbin/ys-f66c-camera-start
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

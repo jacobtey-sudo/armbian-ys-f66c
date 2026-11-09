@@ -6,8 +6,9 @@ BOOT_SOC="rk3566"
 BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 
 # The internal camera is a plain USB UVC device, so a generic V4L2 app is
-# enough: Kamoso for the desktop plus v4l-utils for CLI testing.
-PACKAGE_LIST_BOARD="kamoso v4l-utils"
+# enough: Kamoso for the desktop plus v4l-utils for CLI testing. The rotation
+# service needs gst-launch-1.0.
+PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools"
 
 # AIC8800 SDIO WiFi+BT. The chip reports SDIO vendor 0xc8a1 (AIC8800D80),
 # not the Broadcom "ap6212" that the vendor DTS claims. The Radxa DKMS
@@ -168,4 +169,37 @@ function post_family_tweaks__ys_f66c_power_button() {
 			powerButtonAction=16
 		EOT
 	done
+}
+
+# The internal camera is a portrait UVC sensor: the raw picture is turned 90
+# degrees. v4l2loopback carries a rotated copy on /dev/video10. Desktop apps
+# see only the virtual camera; the raw device stays root-only. Kamoso uses the
+# libcamera GStreamer provider, which hides every v4l2 device, so remove it.
+function post_family_tweaks__ys_f66c_camera() {
+	display_alert "$BOARD" "Installing YS-F66C rotated virtual camera" "info"
+	local kv src="${SRC}/userpatches/packages"
+	kv=$(ls -1 "${SDCARD}/lib/modules" | head -1)
+	[[ -n "$kv" ]] || { display_alert "$BOARD" "No kernel modules found" "err"; exit 1; }
+
+	install -D -m 0755 "${src}/ys-f66c-camera/ys-f66c-camera-start" "${SDCARD}/usr/local/sbin/ys-f66c-camera-start"
+	install -D -m 0644 "${src}/ys-f66c-camera/ys-f66c-camera" "${SDCARD}/etc/default/ys-f66c-camera"
+	install -D -m 0644 "${src}/ys-f66c-camera/ys-f66c-camera-rotate.service" "${SDCARD}/etc/systemd/system/ys-f66c-camera-rotate.service"
+	install -D -m 0644 "${src}/ys-f66c-camera/ys-f66c-v4l2loopback.conf" "${SDCARD}/etc/modprobe.d/ys-f66c-v4l2loopback.conf"
+	install -D -m 0644 "${src}/ys-f66c-camera/72-ys-f66c-hide-raw-camera.rules" "${SDCARD}/etc/udev/rules.d/72-ys-f66c-hide-raw-camera.rules"
+
+	install -D -m 0644 "${src}/v4l2loopback-0.13.2.tar.gz" "${SDCARD}/usr/src/v4l2loopback-0.13.2.tar.gz"
+	chroot_sdcard tar -xzf /usr/src/v4l2loopback-0.13.2.tar.gz -C /usr/src
+	chroot_sdcard_apt_get_install build-essential
+	if ! chroot_sdcard make -C "/lib/modules/${kv}/build" M="/usr/src/v4l2loopback-0.13.2" modules modules_install; then
+		local prebuilt="${src}/v4l2loopback-0.13.2-${kv}.ko"
+		[[ -f "$prebuilt" ]] || { display_alert "$BOARD" "v4l2loopback build failed" "err"; exit 1; }
+		display_alert "$BOARD" "Using prebuilt v4l2loopback module" "warn"
+		install -D -m 0644 "$prebuilt" "${SDCARD}/usr/lib/modules/${kv}/extra/v4l2loopback.ko"
+	fi
+	chroot_sdcard depmod -a "${kv}"
+	rm -rf "${SDCARD}/usr/src/v4l2loopback-0.13.2" "${SDCARD}/usr/src/v4l2loopback-0.13.2.tar.gz"
+
+	chroot_sdcard systemctl --no-reload enable ys-f66c-camera-rotate.service
+	chroot_sdcard_apt_get_remove gstreamer1.0-libcamera || true
+	rm -f "${SDCARD}/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstlibcamera.so"
 }
