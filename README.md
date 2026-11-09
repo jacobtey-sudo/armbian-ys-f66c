@@ -1,10 +1,10 @@
-# Armbian для планшета Yisheng YS-F66C (Rockchip RK3566)
+# Armbian для планшета на плате Yisheng YS-F66C (Rockchip RK3566)
 
 Board-support (`userpatches`) для сборки Armbian с вендорским ядром Rockchip 6.1
-и рабочим железом планшета YS-F66C.
+и рабочим железом планшета на плате YS-F66C.
 
 **English TL;DR:** Board support (`userpatches`) for the Yisheng YS-F66C RK3566
-tablet. Clone the Armbian build framework (pinned commit), clone this repo as
+board. Clone the Armbian build framework (pinned commit), clone this repo as
 `userpatches/`, run `./compile.sh ys-f66c build`. See the build section below.
 
 ---
@@ -30,6 +30,7 @@ MIPI-камер (GC2145 / OV5648) на плате **нет** — они не р�
 
 - [x] Дисплей и подсветка (Android-профиль панели 224)
 - [x] Тачскрин
+- [x] Ethernet (IP101GR)
 - [x] WiFi 2.4/5 ГГц, HE (Wi-Fi 6) — AIC8800D80
 - [x] Bluetooth 5.4, A2DP/HFP — AIC8800D80
 - [x] Звук: динамик, наушники, микрофон (RK809)
@@ -162,7 +163,6 @@ Vendor 6.1.172, закреплён на коммите
   в crash-loop. Только встроенный экран или только HDMI — стабильно.
 - Наушники и динамик играют одновременно (нет jack-detect и глушения усилителя).
 - MIPI-камер нет; работает только USB-камера.
-- Ethernet (IP101GR) не проверялся.
 
 ## Полезные команды на устройстве
 
