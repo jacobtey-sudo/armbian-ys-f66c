@@ -48,6 +48,56 @@ function post_family_tweaks__ys_f66c_enable_bt_unblock() {
 	chroot_sdcard systemctl --no-reload enable ys-f66c-bt-unblock.service
 }
 
+# Several identical tablets otherwise show up on the network under the same
+# name, because HOST defaults to BOARD ("ys-f66c"). On first boot, before
+# networking starts, derive a unique name from the SoC serial number:
+#   serial 0000000000000000 -> ys-f66c-XXXX
+# The service only acts while /etc/hostname still holds the image default, so
+# a name set by the user is never overwritten.
+function post_family_tweaks_bsp__ys_f66c_unique_hostname() {
+	display_alert "$BOARD" "Installing unique hostname service" "info"
+	install -d -m 0755 "${destination}/usr/local/sbin" "${destination}/usr/lib/systemd/system"
+	cat > "${destination}/usr/local/sbin/ys-f66c-hostname" <<-'EOT'
+		#!/bin/sh
+		# Unique hostname (ys-f66c-XXXX) from the RK3566 serial number.
+		set -e
+		default=ys-f66c
+		[ "$(cat /etc/hostname 2>/dev/null)" = "$default" ] || exit 0
+		serial=$(tr -d "\000" < /proc/device-tree/serial-number 2>/dev/null | tr -d "[:space:]") || exit 0
+		[ -n "$serial" ] || exit 0
+		suffix=$(printf "%s" "$serial" | tail -c 4)
+		name="$default-$suffix"
+		printf "%s\n" "$name" > /etc/hostname
+		if grep -q "^127\.0\.1\.1" /etc/hosts; then
+			sed -i "s/^127\.0\.1\.1.*/127.0.1.1 $name/" /etc/hosts
+		else
+			printf "127.0.1.1 %s\n" "$name" >> /etc/hosts
+		fi
+		hostname "$name" 2>/dev/null || true
+	EOT
+	chmod 0755 "${destination}/usr/local/sbin/ys-f66c-hostname"
+	cat > "${destination}/usr/lib/systemd/system/ys-f66c-hostname.service" <<-'EOT'
+		[Unit]
+		Description=Unique hostname from board serial (YS-F66C)
+		DefaultDependencies=no
+		After=local-fs.target
+		Before=network-pre.target systemd-hostnamed.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/local/sbin/ys-f66c-hostname
+		RemainAfterExit=yes
+
+		[Install]
+		WantedBy=sysinit.target
+	EOT
+}
+
+function post_family_tweaks__ys_f66c_enable_unique_hostname() {
+	display_alert "$BOARD" "Enabling unique hostname service" "info"
+	chroot_sdcard systemctl --no-reload enable ys-f66c-hostname.service
+}
+
 # Own bootenv file. It shows the full kernel log on the UART (verbosity=7)
 # and enables earlycon on uart2 for bring-up.
 function post_family_config__ys_f66c_bootenv() {
