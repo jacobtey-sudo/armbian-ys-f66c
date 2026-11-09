@@ -10,27 +10,28 @@ BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 # service needs gst-launch-1.0.
 PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools"
 
-# AIC8800 SDIO WiFi+BT. The chip reports SDIO vendor 0xc8a1 (AIC8800D80),
-# not the Broadcom "ap6212" that the vendor DTS claims. The Radxa DKMS
-# package patches the SDIO firmware path to
-# /lib/firmware/aic8800_fw/SDIO/<chip>, so no modprobe options are needed.
-# DKMS builds the modules in the chroot against the vendor kernel headers.
-# Verified on hardware 08.11.2026: wlan0 up, HE (Wi-Fi 6), ping/HTTP/HTTPS OK.
+# WiFi: two hardware revisions exist. The AP6212 revision (SDIO 02d0:a9a6)
+# uses the in-tree brcmfmac. The AIC8800 revision (SDIO c8a1) uses the Radxa
+# DKMS package from the radxa-aic8800 extension. The extension is installed
+# on every image; its modules do not bind on AP6212 units.
+# Verified on hardware: AIC 08.11.2026 (HE, ping/HTTP OK), AP6212 09.11.2026.
 AIC8800_TYPE="sdio"
 enable_extension "radxa-aic8800"
 
-# AIC8800 Bluetooth. Kernel 6.1 ships CONFIG_BT_HCIUART_AIC, which attaches
-# hci0 through the serdev node "cvte,aic8800-bt" on uart1 (see the DTS) --
-# no hciattach needed. The Rockchip rfkill-bt driver powers the chip off
-# (soft-blocked) at boot, so unblock it once the system is up; otherwise
-# BlueZ keeps hci0 down. Verified on hardware 08.11.2026: hci0 AIC8820,
-# HCI 5.4, scan finds nearby devices.
+# Bluetooth is on UART1 (serial@fe650000). The Rockchip rfkill-bt driver
+# controls power and reset. Kernel 6.1 attaches hci0 through a serdev child
+# node; no hciattach is needed.
+#   AP6212 revision (BCM43430A1): hci_uart_bcm loads brcm/BCM43430A1.hcd.
+#     This is the default DTB.
+#   AIC8800 revision: hci_uart_aic asks the AIC SDIO driver for the firmware.
+#     This revision uses rk3566-ys-f66c-aic.dtb (see the selector below).
+# Verified on hardware 09.11.2026 (AP6212): hci0 up, scan finds devices.
 function post_family_tweaks_bsp__ys_f66c_bt_unblock() {
 	display_alert "$BOARD" "Installing YS-F66C BT rfkill unblock service" "info"
 	install -d -m 0755 "${destination}/usr/lib/systemd/system"
 	cat > "${destination}/usr/lib/systemd/system/ys-f66c-bt-unblock.service" <<-'EOT'
 		[Unit]
-		Description=Unblock AIC8800 Bluetooth rfkill (YS-F66C)
+		Description=Unblock Bluetooth rfkill (YS-F66C)
 		After=bluetooth.service
 		Wants=bluetooth.service
 
@@ -47,6 +48,58 @@ function post_family_tweaks_bsp__ys_f66c_bt_unblock() {
 function post_family_tweaks__ys_f66c_enable_bt_unblock() {
 	display_alert "$BOARD" "Enabling YS-F66C BT rfkill unblock service" "info"
 	chroot_sdcard systemctl --no-reload enable ys-f66c-bt-unblock.service
+}
+
+# The default DTB targets the AP6212, so Bluetooth works on the first boot.
+# On a unit with the AIC8800 SDIO id c8a1, point fdtfile at the AIC DTB and
+# reboot once.
+function post_family_tweaks_bsp__ys_f66c_bt_dtb() {
+	display_alert "$BOARD" "Installing YS-F66C Bluetooth DTB selector" "info"
+	install -d -m 0755 "${destination}/usr/local/sbin" "${destination}/usr/lib/systemd/system"
+	cat > "${destination}/usr/local/sbin/ys-f66c-bt-dtb" <<-'EOT'
+		#!/bin/sh
+		# Select the Bluetooth DTB variant once (see the board config).
+		set -e
+		envfile=/boot/armbianEnv.txt
+		marker=/etc/ys-f66c-bt-dtb.done
+		[ -e "$marker" ] && exit 0
+		[ -f "$envfile" ] || exit 0
+		aic=0
+		for dev in /sys/bus/sdio/devices/*; do
+		    [ -r "$dev/uevent" ] || continue
+		    if grep -qi "^SDIO_ID=C8A1:" "$dev/uevent"; then
+		        aic=1
+		        break
+		    fi
+		done
+		if [ "$aic" = 1 ] && grep -q "^fdtfile=rockchip/rk3566-ys-f66c\.dtb$" "$envfile"; then
+		    sed -i "s|^fdtfile=.*|fdtfile=rockchip/rk3566-ys-f66c-aic.dtb|" "$envfile"
+		    touch "$marker"
+		    sync
+		    systemctl reboot
+		    exit 0
+		fi
+		touch "$marker"
+	EOT
+	chmod 0755 "${destination}/usr/local/sbin/ys-f66c-bt-dtb"
+	cat > "${destination}/usr/lib/systemd/system/ys-f66c-bt-dtb.service" <<-'EOT'
+		[Unit]
+		Description=Select Bluetooth DTB revision (YS-F66C)
+		After=local-fs.target sysinit.target
+		ConditionPathExists=!/etc/ys-f66c-bt-dtb.done
+
+		[Service]
+		Type=oneshot
+		ExecStart=/usr/local/sbin/ys-f66c-bt-dtb
+
+		[Install]
+		WantedBy=multi-user.target
+	EOT
+}
+
+function post_family_tweaks__ys_f66c_enable_bt_dtb() {
+	display_alert "$BOARD" "Enabling YS-F66C Bluetooth DTB selector" "info"
+	chroot_sdcard systemctl --no-reload enable ys-f66c-bt-dtb.service
 }
 
 # Several identical tablets otherwise show up on the network under the same

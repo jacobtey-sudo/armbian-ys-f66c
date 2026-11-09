@@ -1,0 +1,11 @@
+// YS-F66C hardware revision with an AIC8800 combo (WiFi+BT) instead of the
+// AP6212 (BCM43430A1). The base DTS targets the AP6212 (hci_uart_bcm); this
+// variant only swaps the Bluetooth serdev compatible so that hci_uart_aic
+// binds instead (the AIC SDIO driver loads the BT firmware).
+#include "rk3566-ys-f66c.dts"
+
+&uart1 {
+	bluetooth {
+		compatible = "cvte,aic8800-bt";
+	};
+};

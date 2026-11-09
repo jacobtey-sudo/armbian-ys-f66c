@@ -642,7 +642,7 @@
 	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
 
 	bluetooth {
-		compatible = "cvte,aic8800-bt";
+		compatible = "brcm,bcm43430a1-bt";
 	};
 };
 

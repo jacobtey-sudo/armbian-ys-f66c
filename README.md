@@ -18,7 +18,7 @@ board. Clone the Armbian build framework (pinned commit), clone this repo as
 | Экран | 10.1", 800×1280, MIPI DSI |
 | Тачскрин | Goodix GT9271 (I2C1, INT GPIO3_C6 / RST GPIO3_C7) |
 | PMIC / звук | RK809 (динамик, наушники 3.5 мм, микрофон) |
-| WiFi / BT | AIC8800D80 (SDIO / UART) |
+| WiFi / BT | две ревизии: AP6212 (BCM43430A1, SDIO `02d0`) или AIC8800D80 (SDIO `c8a1`) |
 | Ethernet | IP101GR PHY (не проверялся) |
 | Камера | внутренняя **USB UVC** (`1b17:0211` / `0bda:2161`) за хабом `1a40:0101` |
 | Кнопка питания | GPIO-кнопка → меню завершения работы KDE |
@@ -31,8 +31,8 @@ MIPI-камер (GC2145 / OV5648) на плате **нет** — они не р�
 - [x] Дисплей и подсветка (Android-профиль панели 224)
 - [x] Тачскрин
 - [x] Ethernet (IP101GR)
-- [x] WiFi 2.4/5 ГГц, HE (Wi-Fi 6) — AIC8800D80
-- [x] Bluetooth 5.4, A2DP/HFP — AIC8800D80
+- [x] WiFi 2.4/5 ГГц — AP6212 (`brcmfmac`) или AIC8800D80 (HE, Wi-Fi 6)
+- [x] Bluetooth — AP6212 (BCM43430A1, HCI 4.0) или AIC8800D80 (HCI 5.4)
 - [x] Звук: динамик, наушники, микрофон (RK809)
 - [x] USB-камера (UVC): повёрнутая виртуальная камера `/dev/video10`
 - [x] USB host (в т.ч. OTG-порт в режиме host)
@@ -140,10 +140,19 @@ Armbian, оставлены для совместимости.
 Android-профиль 224 (полная `panel-init-sequence`), `dsi,flags = 0xa03`
 (VIDEO | BURST | NO_EOT_PACKET | LPM), reset active-low. Профиль 35 не подходит.
 
-### WiFi / Bluetooth AIC8800D80
-Плата притворяется Broadcom (`ap6212`), но SDIO vendor — `0xc8a1`.
-Используется Armbian-расширение `radxa-aic8800` (DKMS). BT — serdev
-`cvte,aic8800-bt` на uart1 + сервис разблокировки rfkill.
+### WiFi / Bluetooth
+Платы выпускаются в двух ревизиях. Ревизию определяет SDIO vendor:
+
+* `02d0:a9a6` — AP6212, Broadcom BCM43430A1. WiFi — встроенный `brcmfmac`,
+  BT — serdev `brcm,bcm43430a1-bt` на uart1, прошивка `brcm/BCM43430A1.hcd`.
+* `c8a1` — AIC8800D80. WiFi — расширение `radxa-aic8800` (DKMS), BT — serdev
+  `cvte,aic8800-bt`; прошивку грузит AIC SDIO-драйвер.
+
+Базовый DTB рассчитан на AP6212. На ревизии AIC8800 служба
+`ys-f66c-bt-dtb.service` при первом запуске переключает `fdtfile` на
+`rk3566-ys-f66c-aic.dtb` и один раз перезагружает планшет.
+Служба `ys-f66c-bt-unblock.service` выполняет `rfkill unblock bluetooth`.
+Подробности — `docs/BT-STATUS.md`.
 
 ### Питание USB-хаба и портов
 Вендорский драйвер `usb-host-power-gpio` отсутствует в ядре 6.1. Заменён на
@@ -205,6 +214,7 @@ cat /sys/kernel/debug/gpio | grep usb-
 # WiFi/BT
 nmcli device status
 bluetoothctl show
+dmesg | grep -iE "brcmfmac|brcm|aic8800|bluetooth"
 
 # ядро
 dmesg | grep -iE "panel|dsi|aic8800|uvc"
