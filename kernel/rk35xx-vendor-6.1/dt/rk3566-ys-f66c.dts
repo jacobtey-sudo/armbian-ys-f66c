@@ -9,6 +9,7 @@
 
 #include "rk3566.dtsi"
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/rockchip.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/leds/common.h>
@@ -31,6 +32,28 @@
 
 	chosen: chosen {
 		stdout-path = "serial2:1500000n8";
+	};
+
+	/*
+	 * Физическая кнопка питания: GPIO3_C1 (bank 3, pin 17), active-low.
+	 * В вендорском Android DTS — gpio-keys/power с linux,code = KEY_POWER.
+	 * Без этого узла кнопка не генерирует событий вообще (RK809 pwrkey —
+	 * это отдельный вход PMIC, а не сама кнопка).
+	 */
+	gpio-keys {
+		compatible = "gpio-keys";
+		autorepeat;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pwrbtn>;
+
+		power {
+			gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			label = "GPIO Key Power";
+			linux,input-type = <EV_KEY>;
+			wakeup-source;
+			debounce-interval = <100>;
+		};
 	};
 
 	dc_12v: dc-12v {
@@ -919,6 +942,12 @@
 	pmic {
 		pmic_int_l: pmic-int-l {
 			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	buttons {
+		pwrbtn: pwrbtn {
+			rockchip,pins = <3 RK_PC1 RK_FUNC_GPIO &pcfg_pull_up>;
 		};
 	};
 
