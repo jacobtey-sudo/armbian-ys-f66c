@@ -5,6 +5,10 @@ KERNEL_TARGET="vendor"
 BOOT_SOC="rk3566"
 BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 
+# The internal camera is a plain USB UVC device, so a generic V4L2 app is
+# enough: Kamoso for the desktop plus v4l-utils for CLI testing.
+PACKAGE_LIST_BOARD="kamoso v4l-utils"
+
 # AIC8800 SDIO WiFi+BT. The chip reports SDIO vendor 0xc8a1 (AIC8800D80),
 # not the Broadcom "ap6212" that the vendor DTS claims. The Radxa DKMS
 # package patches the SDIO firmware path to
