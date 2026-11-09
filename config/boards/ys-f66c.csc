@@ -95,7 +95,8 @@ function post_family_config__ys_f66c_use_mainline_uboot() {
 
 # Power button (short press) opens the KDE logout / shutdown dialog.
 # powerdevil handles the key itself and inhibits logind's power key.
-# PowerDevil::PowerButtonAction::PromptLogoutDialog == 16.
+# SuspendSession::LogoutDialogMode == 16; key is powerButtonAction (lowercase)
+# in the per-action group [<profile>][HandleButtonEvents].
 function post_family_tweaks__ys_f66c_power_button() {
 	display_alert "$BOARD" "KDE power button -> logout/shutdown dialog" "info"
 	local g
@@ -103,14 +104,14 @@ function post_family_tweaks__ys_f66c_power_button() {
 	         "${SDCARD}/etc/skel/.config/powerdevilrc"; do
 		install -d -m 0755 "$(dirname "$g")"
 		cat > "$g" <<-'EOT'
-			[AC][SuspendAndShutdown]
-			PowerButtonAction=16
+			[AC][HandleButtonEvents]
+			powerButtonAction=16
 			
-			[Battery][SuspendAndShutdown]
-			PowerButtonAction=16
+			[Battery][HandleButtonEvents]
+			powerButtonAction=16
 			
-			[LowBattery][SuspendAndShutdown]
-			PowerButtonAction=16
+			[LowBattery][HandleButtonEvents]
+			powerButtonAction=16
 		EOT
 	done
 }
