@@ -342,3 +342,13 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 		DisplayCommand=/usr/local/sbin/ys-f66c-sddm-xsetup
 	EOT
 }
+
+# The Breeze lock screen blurs the wallpaper. Disable the effect.
+function post_family_tweaks_bsp__ys_f66c_sharp_lock_screen() {
+	local fader
+	for fader in "${destination}"/usr/lib/*/qt6/qml/org/kde/breeze/components/WallpaperFader.qml; do
+		[ -f "$fader" ] || continue
+		display_alert "$BOARD" "Disabling lock screen wallpaper blur" "info"
+		sed -i '/target: wallpaperFader/{n;s/factor: 1/factor: 0/}' "$fader"
+	done
+}
