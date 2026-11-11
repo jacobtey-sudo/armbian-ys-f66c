@@ -281,3 +281,27 @@ function post_family_tweaks_bsp__ys_f66c_cpufreq_governor() {
 function post_family_tweaks__ys_f66c_enable_cpufreq_governor() {
 	chroot_sdcard systemctl --no-reload enable ys-f66c-cpufreq-governor.service
 }
+
+# The SDDM greeter is an X11 client and does not read the user's
+# kwinoutputconfig.json. Rotate its X server before the greeter starts, so a
+# logout screen is already landscape. The Plasma session itself is Wayland and
+# keeps using KWin's Rotated270 transform.
+function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
+	display_alert "$BOARD" "Installing YS-F66C SDDM rotation hook" "info"
+	install -d -m 0755 "${destination}/usr/local/sbin" "${destination}/etc/sddm.conf.d"
+	cat > "${destination}/usr/local/sbin/ys-f66c-sddm-xsetup" <<-'EOT'
+		#!/bin/sh
+		# Match the KWin output transform (Rotated270) on the SDDM greeter.
+		[ -n "${DISPLAY:-}" ] || exit 0
+		command -v xrandr >/dev/null 2>&1 || exit 0
+		xrandr --query 2>/dev/null | awk '/ connected/{print $1}' | while read -r output; do
+			xrandr --output "$output" --rotate left 2>/dev/null || true
+		done
+	EOT
+	chmod 0755 "${destination}/usr/local/sbin/ys-f66c-sddm-xsetup"
+	cat > "${destination}/etc/sddm.conf.d/ys-f66c-rotation.conf" <<-'EOT'
+		[General]
+		DisplayServer=x11
+		DisplayCommand=/usr/local/sbin/ys-f66c-sddm-xsetup
+	EOT
+}
