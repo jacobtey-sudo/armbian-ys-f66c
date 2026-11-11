@@ -343,11 +343,15 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 	EOT
 }
 
-# The Breeze lock screen blurs the wallpaper. Disable the effect.
-function post_family_tweaks__ys_f66c_sharp_lock_screen() {
-	display_alert "$BOARD" "Disabling lock screen wallpaper blur" "info"
-	chroot_sdcard 'for f in /usr/lib/*/qt6/qml/org/kde/breeze/components/WallpaperFader.qml; do
-		[ -f "$f" ] || continue
-		sed -i "/target: wallpaperFader/{n;s/factor: 1/factor: 0/}" "$f"
-	done'
+# DPMS off/on corrupts the DSI panel. Keep the display on.
+function post_family_tweaks__ys_f66c_no_screen_off() {
+	display_alert "$BOARD" "Disabling automatic display power-off" "info"
+	for profile in AC Battery LowBattery; do
+		chroot_sdcard kwriteconfig6 --file /etc/xdg/powerdevilrc \
+			--group "$profile" --group Display \
+			--key TurnOffDisplayWhenIdle --type bool false
+		chroot_sdcard kwriteconfig6 --file /etc/xdg/powerdevilrc \
+			--group "$profile" --group Display \
+			--key DimDisplayWhenIdle --type bool false
+	done
 }
