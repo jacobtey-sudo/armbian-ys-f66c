@@ -10,6 +10,10 @@ BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 # service needs gst-launch-1.0.
 PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools"
 
+# Maliit is KWin's virtual keyboard provider. It hangs on this image; Onboard
+# is the Plasma OSK and Qt Virtual Keyboard serves SDDM.
+PACKAGE_LIST_BOARD_REMOVE="maliit-keyboard maliit-framework libmaliit-plugins2"
+
 # WiFi: two hardware revisions exist. The AP6212 revision (SDIO 02d0:a9a6)
 # uses the in-tree brcmfmac. The AIC8800 revision (SDIO c8a1) uses the Radxa
 # DKMS package from the radxa-aic8800 extension. The extension is installed
