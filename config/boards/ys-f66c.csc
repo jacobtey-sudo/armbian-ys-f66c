@@ -291,17 +291,31 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 	install -d -m 0755 "${destination}/usr/local/sbin" "${destination}/etc/sddm.conf.d"
 	cat > "${destination}/usr/local/sbin/ys-f66c-sddm-xsetup" <<-'EOT'
 		#!/bin/sh
-		# Match the KWin output transform (Rotated270) on the SDDM greeter.
+		# Rotate the SDDM X server into landscape (90 degrees clockwise).
+		# Keep this idempotent: Xorg may survive between greeter runs.
 		[ -n "${DISPLAY:-}" ] || exit 0
 		command -v xrandr >/dev/null 2>&1 || exit 0
 		xrandr --query 2>/dev/null | awk '/ connected/{print $1}' | while read -r output; do
-			xrandr --output "$output" --rotate left 2>/dev/null || true
+			geometry=$(xrandr --query 2>/dev/null | awk -v out="$output" '$1 == out {print $3; exit}')
+			case "$geometry" in
+				*x*+*)
+					width=${geometry%%x*}
+					rest=${geometry#*x}
+					height=${rest%%+*}
+					if [ "${width:-0}" -lt "${height:-0}" ]; then
+						xrandr --output "$output" --rotate right 2>/dev/null || true
+					fi
+					;;
+			esac
 		done
 	EOT
 	chmod 0755 "${destination}/usr/local/sbin/ys-f66c-sddm-xsetup"
 	cat > "${destination}/etc/sddm.conf.d/ys-f66c-rotation.conf" <<-'EOT'
 		[General]
 		DisplayServer=x11
+		InputMethod=qtvirtualkeyboard
+
+		[X11]
 		DisplayCommand=/usr/local/sbin/ys-f66c-sddm-xsetup
 	EOT
 }

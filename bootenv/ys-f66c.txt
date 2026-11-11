@@ -8,6 +8,6 @@ console=both
 # ни строки и не доходит до init (проверено 02.11.2026).
 # fsck.mode=force fsck.repair=yes: авто-ремонт ФС при загрузке. Обрыв питания
 # повреждает ext4, а preen (fsck -a) не чинит и роняет загрузку.
-# fbcon=rotate:3: панель физически портретная, KWin поворачивает её на 270°;
-# тот же поворот нужен для текстовой консоли до запуска графики.
-extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000 nokaslr fsck.mode=force fsck.repair=yes fbcon=rotate:3
+# fbcon=rotate:1: панель физически портретная, консоль нужна в landscape
+# (90° по часовой стрелке).
+extraargs=cma=256M earlycon=uart8250,mmio32,0xfe660000 nokaslr fsck.mode=force fsck.repair=yes fbcon=rotate:1
