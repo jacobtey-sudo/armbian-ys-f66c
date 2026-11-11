@@ -256,3 +256,28 @@ function post_family_tweaks__ys_f66c_camera() {
 	chroot_sdcard_apt_get_remove gstreamer1.0-libcamera || true
 	rm -f "${SDCARD}/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstlibcamera.so"
 }
+
+# The vendor default is ondemand. schedutil is a better fit for the A55 +
+# Plasma workload and reacts faster to interactive load.
+function post_family_tweaks_bsp__ys_f66c_cpufreq_governor() {
+	display_alert "$BOARD" "Installing YS-F66C cpufreq governor service" "info"
+	install -d -m 0755 "${destination}/usr/lib/systemd/system"
+	cat > "${destination}/usr/lib/systemd/system/ys-f66c-cpufreq-governor.service" <<-'EOT'
+		[Unit]
+		Description=Set YS-F66C CPU governor to schedutil
+		After=sysinit.target
+		Before=display-manager.service
+
+		[Service]
+		Type=oneshot
+		ExecStart=/bin/sh -c 'for p in /sys/devices/system/cpu/cpufreq/policy*; do [ -w "$p/scaling_governor" ] && echo schedutil > "$p/scaling_governor"; done'
+		RemainAfterExit=yes
+
+		[Install]
+		WantedBy=multi-user.target
+	EOT
+}
+
+function post_family_tweaks__ys_f66c_enable_cpufreq_governor() {
+	chroot_sdcard systemctl --no-reload enable ys-f66c-cpufreq-governor.service
+}
