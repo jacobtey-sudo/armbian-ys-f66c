@@ -282,20 +282,39 @@ function post_family_tweaks__ys_f66c_enable_cpufreq_governor() {
 	chroot_sdcard systemctl --no-reload enable ys-f66c-cpufreq-governor.service
 }
 
-# The SDDM greeter is an X11 client and does not read the user's
-# kwinoutputconfig.json. Rotate its X server before the greeter starts, so a
-# logout screen is already landscape. The Plasma session itself is Wayland and
-# keeps using KWin's Rotated270 transform.
+# The SDDM greeter is X11. Rotate it before the greeter starts.
+# The Plasma session is Wayland and keeps KWin's Rotated270 transform.
 function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 	display_alert "$BOARD" "Installing YS-F66C SDDM rotation hook" "info"
 	install -d -m 0755 "${destination}/usr/local/sbin" "${destination}/etc/sddm.conf.d"
 	cat > "${destination}/usr/local/sbin/ys-f66c-sddm-xsetup" <<-'EOT'
 		#!/bin/sh
-		# Rotate the SDDM X server into landscape (90 degrees clockwise).
-		# Keep this idempotent: Xorg may survive between greeter runs.
-		[ -n "${DISPLAY:-}" ] || exit 0
+		# Rotate the greeter X server. Keep this idempotent.
+		LOG=/var/log/ys-f66c-sddm-xsetup.log
+		{
+			echo "--- $(date '+%F %T') ---"
+			echo "env DISPLAY=${DISPLAY:-} XAUTHORITY=${XAUTHORITY:-}"
+		} >>"$LOG" 2>&1
+
+		[ -n "${DISPLAY:-}" ] || DISPLAY=:0
+		if [ -z "${XAUTHORITY:-}" ]; then
+			XAUTHORITY=$(ls -t /run/sddm/xauth_* 2>/dev/null | head -1)
+		fi
+		export DISPLAY XAUTHORITY
+		echo "use DISPLAY=$DISPLAY XAUTHORITY=${XAUTHORITY:-}" >>"$LOG" 2>&1
 		command -v xrandr >/dev/null 2>&1 || exit 0
-		xrandr --query 2>/dev/null | awk '/ connected/{print $1}' | while read -r output; do
+
+		# The connector can appear a moment after Xorg starts.
+		i=0
+		outputs=
+		while [ "$i" -lt 25 ]; do
+			outputs=$(xrandr --query 2>/dev/null | awk '/ connected/{print $1}')
+			[ -n "$outputs" ] && break
+			i=$((i + 1))
+			sleep 0.2
+		done
+		echo "outputs: ${outputs:-none}" >>"$LOG" 2>&1
+		for output in $outputs; do
 			geometry=$(xrandr --query 2>/dev/null | awk -v out="$output" '$1 == out {print $3; exit}')
 			case "$geometry" in
 				*x*+*)
@@ -303,7 +322,8 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 					rest=${geometry#*x}
 					height=${rest%%+*}
 					if [ "${width:-0}" -lt "${height:-0}" ]; then
-						xrandr --output "$output" --rotate right 2>/dev/null || true
+						echo "rotate $output right" >>"$LOG" 2>&1
+						xrandr --output "$output" --rotate right >>"$LOG" 2>&1 || true
 					fi
 					;;
 			esac
@@ -313,7 +333,6 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 	cat > "${destination}/etc/sddm.conf.d/ys-f66c-rotation.conf" <<-'EOT'
 		[General]
 		DisplayServer=x11
-		InputMethod=qtvirtualkeyboard
 
 		[X11]
 		DisplayCommand=/usr/local/sbin/ys-f66c-sddm-xsetup
