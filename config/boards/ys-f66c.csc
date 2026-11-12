@@ -228,6 +228,24 @@ function post_family_tweaks__ys_f66c_power_button() {
 	done
 }
 
+# Holding Backspace at the start of a line makes the terminal/application ring
+# the system bell for every key repeat. Each bell creates a new KWin audio
+# stream; with A2DP active this stalls the compositor (thousands of "Key repeat
+# discarded" messages) and loops the bell. The tablet has no need for an
+# audible bell, so disable it system-wide and for newly created users.
+function post_family_tweaks__ys_f66c_disable_bell() {
+	display_alert "$BOARD" "Disabling the KDE system bell" "info"
+	local f
+	for f in "${SDCARD}/etc/xdg/kaccessrc" \
+	         "${SDCARD}/etc/skel/.config/kaccessrc"; do
+		install -d -m 0755 "$(dirname "$f")"
+		cat > "$f" <<-'EOT'
+			[Bell]
+			SystemBell=false
+		EOT
+	done
+}
+
 # The internal camera is a portrait UVC sensor: the raw picture is turned 90
 # degrees. v4l2loopback carries a rotated copy on /dev/video10. Desktop apps
 # see only the virtual camera; the raw device stays root-only. Kamoso uses the
