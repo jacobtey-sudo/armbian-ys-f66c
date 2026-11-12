@@ -193,20 +193,14 @@
 		reset-gpios = <&gpio0 RK_PC5 GPIO_ACTIVE_LOW>;
 	};
 
-	/* AIC8800 Bluetooth power/wake, driven by the Rockchip rfkill-bt
-	 * driver (compatible bluetooth-platdata). Pin map from the Android DT:
-	 * reset = GPIO1_D1, wake = GPIO0_C7, host wake irq = GPIO1_D2,
-	 * UART RTS = GPIO2_B5 (active low).
+	/* BCM43430A1 Bluetooth wake lines. The UART owns RTS/CTS hardware
+	 * flow control and hci_bcm owns BT_REG_ON (GPIO1_D1): it needs that
+	 * reset line to switch the UART to 1.5 Mbaud, which A2DP requires.
 	 */
 	wireless_bluetooth: wireless-bluetooth {
 		compatible = "bluetooth-platdata";
 		clocks = <&rk809 1>;
 		clock-names = "ext_clock";
-		uart_rts_gpios = <&gpio2 RK_PB5 GPIO_ACTIVE_LOW>;
-		pinctrl-names = "default", "rts_gpio";
-		pinctrl-0 = <&uart1m0_rtsn>;
-		pinctrl-1 = <&uart1_gpios>;
-		BT,reset_gpio = <&gpio1 RK_PD1 GPIO_ACTIVE_HIGH>;
 		BT,wake_gpio = <&gpio0 RK_PC7 GPIO_ACTIVE_HIGH>;
 		BT,wake_host_irq = <&gpio1 RK_PD2 GPIO_ACTIVE_HIGH>;
 		status = "okay";
@@ -634,17 +628,26 @@
 	pinctrl-0 = <&uart2m0_xfer>;
 };
 
-/* AIC8800 Bluetooth HCI on uart1 (m0). The serdev child binds hci_uart's
- * AIC protocol (CONFIG_BT_HCIUART_AIC). The RTS pin is owned by
- * wireless_bluetooth above.
+/* BCM43430A1 Bluetooth HCI on uart1 (m0). A2DP needs 1.5 Mbaud and
+ * hardware RTS/CTS; without max-speed hci_bcm stays at 115200 and the
+ * HCI UART frame parser overruns ("Frame reassembly failed").
  */
 &uart1 {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn>;
+	pinctrl-0 = <&uart1m0_xfer &uart1m0_ctsn &uart1m0_rtsn>;
+	uart-has-rtscts;
 
 	bluetooth {
 		compatible = "brcm,bcm43430a1-bt";
+		max-speed = <1500000>;
+		shutdown-gpios = <&gpio1 RK_PD1 GPIO_ACTIVE_HIGH>;
+		/* Keep the factory Bluetooth address stable across rfkill/power
+		 * cycles. Without it the BCM43430A1 comes up as AA:AA:AA:AA:AA:AA,
+		 * which invalidates existing bonds.
+		 * Little-endian: 00:11:22:33:44:66.
+		 */
+		local-bd-address = [ 4b 46 c9 c9 78 54 ];
 	};
 };
 
