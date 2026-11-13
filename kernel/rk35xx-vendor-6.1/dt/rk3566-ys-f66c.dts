@@ -185,7 +185,7 @@
 	misc_power_en {
 		compatible = "misc-gpio";
 		mcu,gpio = <&gpio1 RK_PB0 GPIO_ACTIVE_HIGH>;
-		mcu_shutdown_control = <&gpio3 RK_PB3 GPIO_ACTIVE_HIGH>;
+		mcu_shutdown_control = <&gpio3 RK_PD3 GPIO_ACTIVE_HIGH>;
 		model_4g_pwr = <&gpio3 RK_PA3 GPIO_ACTIVE_HIGH>;
 		eth_green_led = <&gpio3 RK_PA2 GPIO_ACTIVE_LOW>;
 		ir_red_led = <&gpio2 RK_PA2 GPIO_ACTIVE_HIGH>;
