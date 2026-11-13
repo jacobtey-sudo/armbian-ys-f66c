@@ -1,0 +1,11 @@
+[Unit]
+Description=Route RK817 audio codec for the 3.5-mm headphone jack (YS-F66C)
+After=alsa-restore.service sound.target
+ConditionPathExists=/sys/class/extcon
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ys-f66c-headset-route
+
+[Install]
+WantedBy=multi-user.target

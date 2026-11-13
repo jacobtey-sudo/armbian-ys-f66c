@@ -8,7 +8,7 @@ BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 # The internal camera is a plain USB UVC device, so a generic V4L2 app is
 # enough: Kamoso for the desktop plus v4l-utils for CLI testing. The rotation
 # service needs gst-launch-1.0.
-PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools"
+PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils"
 
 # Maliit is KWin's virtual keyboard provider. It hangs on this image; Onboard
 # is the Plasma OSK and Qt Virtual Keyboard serves SDDM.
@@ -279,6 +279,22 @@ function post_family_tweaks__ys_f66c_camera() {
 	rm -f "${SDCARD}/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstlibcamera.so"
 }
 
+# The RK817 codec has one output path at a time. Android used the rk_headset
+# driver on GPIO3_D1 and the codec's spk-ctl GPIO to mute the speakers when a
+# 3.5-mm plug was inserted. The kernel already has CONFIG_RK_HEADSET=y; this
+# installs the userspace bridge from extcon to the codec's Playback Path.
+function post_family_tweaks_bsp__ys_f66c_headset() {
+	display_alert "$BOARD" "Installing YS-F66C headphone jack routing" "info"
+	local src="${SRC}/userpatches/packages/ys-f66c-headset"
+	install -D -m 0755 "${src}/ys-f66c-headset-route" "${destination}/usr/local/sbin/ys-f66c-headset-route"
+	install -D -m 0644 "${src}/90-ys-f66c-headset.rules" "${destination}/etc/udev/rules.d/90-ys-f66c-headset.rules"
+	install -D -m 0644 "${src}/ys-f66c-headset-route.service" "${destination}/usr/lib/systemd/system/ys-f66c-headset-route.service"
+}
+
+function post_family_tweaks__ys_f66c_enable_headset() {
+	chroot_sdcard systemctl --no-reload enable ys-f66c-headset-route.service
+}
+
 # The vendor default is ondemand. schedutil is a better fit for the A55 +
 # Plasma workload and reacts faster to interactive load.
 function post_family_tweaks_bsp__ys_f66c_cpufreq_governor() {
@@ -359,6 +375,17 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 		[X11]
 		DisplayCommand=/usr/local/sbin/ys-f66c-sddm-xsetup
 	EOT
+}
+
+# The image enables a serial getty for ttyFIQ0, but this kernel has no
+# fiq-debugger device. The getty's BindsTo=dev-ttyFIQ0.device makes every boot
+# wait 90 seconds at getty.target; the panel then sits on a black screen with
+# a cursor long enough to look like a hang. There is no usable ttyFIQ0 on this
+# board, so disable and mask that one instance. UART2 (ttyS2) remains available.
+function post_family_tweaks__ys_f66c_disable_fiq_getty() {
+	display_alert "$BOARD" "Disabling nonexistent ttyFIQ0 serial getty" "info"
+	chroot_sdcard systemctl --no-reload disable serial-getty@ttyFIQ0.service || true
+	chroot_sdcard systemctl --no-reload mask serial-getty@ttyFIQ0.service || true
 }
 
 # DPMS off/on corrupts the DSI panel. Keep the display on.

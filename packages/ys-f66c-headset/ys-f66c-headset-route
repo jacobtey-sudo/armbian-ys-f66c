@@ -1,0 +1,68 @@
+#!/bin/sh
+# Route the RK817 codec according to the 3.5-mm headphone jack state.
+# The rk_headset driver exposes EXTCON_JACK_HEADPHONE through sysfs.
+# HP also deasserts the codec speaker-amplifier GPIO (spk-ctl).
+set -u
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+LOG=/run/ys-f66c-headset.log
+CARD=rockchiprk809co
+
+state=
+for dev in /sys/class/extcon/extcon*; do
+	[ -r "$dev/name" ] || continue
+	case "$(cat "$dev/name" 2>/dev/null)" in
+		rk-headset|rockchip_headset)
+			state=$(cat "$dev/state" 2>/dev/null || true)
+			break
+			;;
+	esac
+done
+
+case "$state" in
+	*HEADPHONE=1*) path=HP ;;
+	*) path=SPK ;;
+esac
+
+# The sound card can lag behind the extcon device during boot/udev.
+i=0
+while [ "$i" -lt 10 ]; do
+	if amixer -c "$CARD" sset 'Playback Path' "$path" >/dev/null 2>&1; then
+		printf '%s state=%s path=%s\n' "$(date -Is)" "$state" "$path" >>"$LOG"
+
+		# Playback Path only writes codec registers. If a PCM stream is
+		# already active, rk817_digital_mute_dac() is not called again and
+		# spk-ctl keeps its previous level, leaving the speakers on while
+		# the headphones are playing. Cycle the analog sink once so the
+		# codec's mute/unmute callback applies the new path. A future
+		# codec patch could make this unnecessary; keep it as a safe
+		# fallback for kernels without that patch.
+		session_user=$(loginctl list-sessions --no-legend 2>/dev/null |
+			awk '$4 == "seat0" { print $3; exit }')
+		if [ -n "${session_user:-}" ]; then
+			uid=$(id -u "$session_user" 2>/dev/null || true)
+			if [ -n "$uid" ] && [ -S "/run/user/$uid/pulse/native" ]; then
+				sink=$(runuser -u "$session_user" -- \
+					env XDG_RUNTIME_DIR="/run/user/$uid" \
+					pactl list short sinks 2>/dev/null |
+					awk '$2 ~ /rk809-sound/ { print $2; exit }')
+				if [ -n "$sink" ]; then
+					runuser -u "$session_user" -- \
+						env XDG_RUNTIME_DIR="/run/user/$uid" \
+						pactl suspend-sink "$sink" 1 >/dev/null 2>&1 || true
+					sleep 0.15
+					runuser -u "$session_user" -- \
+						env XDG_RUNTIME_DIR="/run/user/$uid" \
+						pactl suspend-sink "$sink" 0 >/dev/null 2>&1 || true
+				fi
+			fi
+		fi
+
+		exit 0
+	fi
+	i=$((i + 1))
+	sleep 0.2
+done
+
+printf '%s failed to set path=%s state=%s\n' "$(date -Is)" "$path" "$state" >&2
+exit 1

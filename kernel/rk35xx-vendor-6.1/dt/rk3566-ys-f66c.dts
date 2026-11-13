@@ -57,6 +57,20 @@
 		};
 	};
 
+	/*
+	 * 3.5-mm headphone jack detect. Android uses the same GPIO3_D1
+	 * (pinctrl hp_det) and the rk_headset driver. The driver reports
+	 * EXTCON_JACK_HEADPHONE; userspace switches Playback Path between
+	 * HP (jack inserted, speaker amp off) and SPK (jack removed).
+	 */
+	rk_headset: rk-headset {
+		compatible = "rockchip_headset";
+		headset_gpio = <&gpio3 RK_PD1 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&hp_det>;
+		status = "okay";
+	};
+
 	dc_12v: dc-12v {
 		compatible = "regulator-fixed";
 		regulator-name = "dc_12v";
@@ -947,6 +961,12 @@
 	pmic {
 		pmic_int_l: pmic-int-l {
 			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	headphone {
+		hp_det: hp-det {
+			rockchip,pins = <3 RK_PD1 RK_FUNC_GPIO &pcfg_pull_down>;
 		};
 	};
 
