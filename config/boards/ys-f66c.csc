@@ -8,11 +8,9 @@ BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 # The internal camera is a plain USB UVC device, so a generic V4L2 app is
 # enough: Kamoso for the desktop plus v4l-utils for CLI testing. The rotation
 # service needs gst-launch-1.0.
-PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils"
-
-# Maliit is KWin's virtual keyboard provider. It hangs on this image; Onboard
-# is the Plasma OSK and Qt Virtual Keyboard serves SDDM.
-PACKAGE_LIST_BOARD_REMOVE="maliit-keyboard maliit-framework libmaliit-plugins2"
+# Maliit is KWin's virtual keyboard provider and the only OSK on the image
+# (Onboard removed). Verified 14.11.2026 in Plasma 6 Wayland and SDDM.
+PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils maliit-keyboard maliit-framework libmaliit-plugins2"
 
 # WiFi: two hardware revisions exist. The AP6212 revision (SDIO 02d0:a9a6)
 # uses the in-tree brcmfmac. The AIC8800 revision (SDIO c8a1) uses the Radxa
@@ -399,4 +397,38 @@ function post_family_tweaks__ys_f66c_no_screen_off() {
 			--group "$profile" --group Display \
 			--key DimDisplayWhenIdle --type bool false
 	done
+}
+
+# MCU power/heartbeat control: Android's misc_gpio driver equivalent.
+# Drives mcu_shutdown_control low before poweroff/halt and high before restart
+# (with the same ~2 s settle), and toggles mcu,gpio as a 3 s heartbeat.
+function post_family_tweaks__ys_f66c_misc_gpio() {
+	display_alert "$BOARD" "Installing YS-F66C MCU misc-gpio module" "info"
+	local kv src="${SRC}/userpatches/packages/ys-f66c-misc-gpio"
+	kv=$(ls -1 "${SDCARD}/lib/modules" | head -1)
+	[[ -n "$kv" ]] || { display_alert "$BOARD" "No kernel modules found" "err"; exit 1; }
+
+	install -D -m 0644 "${src}/misc-gpio.c" "${SDCARD}/usr/src/misc-gpio/misc-gpio.c"
+	install -D -m 0644 "${src}/Makefile" "${SDCARD}/usr/src/misc-gpio/Makefile"
+	chroot_sdcard_apt_get_install build-essential || true
+	if ! chroot_sdcard make -C "/lib/modules/${kv}/build" M="/usr/src/misc-gpio" modules modules_install; then
+		local prebuilt="${src}/misc-gpio-${kv}.ko"
+		[[ -f "$prebuilt" ]] || { display_alert "$BOARD" "misc-gpio build failed" "err"; exit 1; }
+		display_alert "$BOARD" "Using prebuilt misc-gpio module" "warn"
+		install -D -m 0644 "$prebuilt" "${SDCARD}/usr/lib/modules/${kv}/extra/misc-gpio.ko"
+	fi
+	chroot_sdcard depmod -a "${kv}"
+	install -D -m 0644 "${src}/misc-gpio.conf" "${SDCARD}/etc/modules-load.d/misc-gpio.conf"
+	rm -rf "${SDCARD}/usr/src/misc-gpio"
+}
+
+# SDDM greeter: keep the working Breeze on-screen keyboard and avoid the
+# Qt 6.8.2 qtvirtualkeyboard hang. Plasma uses Maliit through KWin.
+function post_family_tweaks_bsp__ys_f66c_sddm_inputmethod() {
+	display_alert "$BOARD" "Installing YS-F66C SDDM InputMethod=none" "info"
+	install -d -m 0755 "${destination}/etc/sddm.conf.d"
+	cat > "${destination}/etc/sddm.conf.d/ys-f66c-inputmethod.conf" <<-'EOT'
+		[General]
+		InputMethod=none
+	EOT
 }

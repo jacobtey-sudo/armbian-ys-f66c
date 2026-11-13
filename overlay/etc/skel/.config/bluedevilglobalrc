@@ -1,0 +1,8 @@
+[Adapters]
+00:11:22:33:44:66_powered=true
+
+[Devices]
+connectedDevices=00:11:22:33:44:88
+
+[Global]
+launchState=enable

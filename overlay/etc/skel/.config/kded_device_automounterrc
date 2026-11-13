@@ -1,0 +1,16 @@
+[Devices][/org/freedesktop/UDisks2/block_devices/mmcblk0p1]
+EverMounted=true
+Icon=drive-harddisk-root
+LastNameSeen=EMMC
+LastSeenMounted=true
+
+[Devices][/org/freedesktop/UDisks2/block_devices/zram1]
+EverMounted=true
+Icon=drive-harddisk
+LastNameSeen=log2ram
+LastSeenMounted=true
+
+[General]
+AutomountEnabled=true
+AutomountOnLogin=true
+AutomountOnPlugin=true

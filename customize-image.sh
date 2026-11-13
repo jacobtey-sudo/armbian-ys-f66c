@@ -20,8 +20,11 @@ BUILD_DESKTOP=$4
 Main() {
 	case $RELEASE in
 		trixie)
-			# your code here
-			# InstallOpenMediaVault # uncomment to get an OMV 4 image
+			# Copy the desktop overlay (Plasma 6 settings, Maliit, SDDM)
+			# collected from the validated running system.
+			if [ -d /tmp/overlay ]; then
+				cp -a /tmp/overlay/. /
+			fi
 			;;
 		forky)
 			# your code here

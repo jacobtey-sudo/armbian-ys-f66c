@@ -1,0 +1,5 @@
+[Default Applications]
+x-scheme-handler/opencode=ai.opencode.desktop.desktop
+
+[Added Associations]
+x-scheme-handler/opencode=ai.opencode.desktop.desktop;
