@@ -5,6 +5,16 @@ KERNEL_TARGET="vendor"
 BOOT_SOC="rk3566"
 BOOT_FDT_FILE="rockchip/rk3566-ys-f66c.dtb"
 
+# The rk35xx vendor default points the serial getty at ttyFIQ0, but this kernel
+# has no fiq-debugger device; serial-getty@ttyFIQ0 waits 90 s on
+# BindsTo=dev-ttyFIQ0.device and the panel shows a black screen that looks like
+# a hang. The boot script already uses console=ttyS2 (UART2, 1500000 baud), so
+# point Armbian at the real port instead. ttyFIQ0 is still masked below.
+function post_family_config__ys_f66c_serial_console() {
+	display_alert "$BOARD" "Using ttyS2 as the serial console getty" "info"
+	declare -g SERIALCON="ttyS2:1500000"
+}
+
 # The internal camera is a plain USB UVC device, so a generic V4L2 app is
 # enough: Kamoso for the desktop plus v4l-utils for CLI testing. The rotation
 # service needs gst-launch-1.0.
