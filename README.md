@@ -19,7 +19,7 @@ board. Clone the Armbian build framework (pinned commit), clone this repo as
 | Тачскрин | Goodix GT9271 (I2C1, INT GPIO3_C6 / RST GPIO3_C7) |
 | PMIC / звук | RK809 (динамик, наушники 3.5 мм, микрофон) |
 | WiFi / BT | две ревизии: AP6212 (BCM43430A1, SDIO `02d0`) или AIC8800D80 (SDIO `c8a1`) |
-| Ethernet | IP101GR PHY (не проверялся) |
+| Ethernet | IP101GR |
 | Камера | внутренняя **USB UVC** (`1b17:0211` / `0bda:2161`) за хабом `1a40:0101` |
 | Кнопка питания | GPIO-кнопка → меню завершения работы KDE |
 | Загрузка | SD-карта или eMMC |
