@@ -3,8 +3,8 @@
  * YS-F66C MCU power/heartbeat control.
  *
  * This is the Linux equivalent of the Android misc_gpio driver:
- *  - mcu_shutdown_control is driven low before poweroff/halt and high
- *    before restart, with the same ~2 s settle time Android uses.
+ *  - mcu_shutdown_control is low in normal operation. Keep it low on
+ *    restart and poweroff; the PMIC handles both. Do not drive it high.
  *  - mcu,gpio is toggled as a heartbeat every 3 s.
  */
 
@@ -73,9 +73,9 @@ static int misc_gpio_reboot_notifier(struct notifier_block *nb,
 		msleep(MCU_SETTLE_MS);
 		break;
 	case SYS_RESTART:
-		dev_info(d->dev, "MCU restart: GPIO%d high, settle %d ms\n",
+		dev_info(d->dev, "MCU restart: GPIO%d low, settle %d ms\n",
 			 d->shutdown_gpio, MCU_SETTLE_MS);
-		gpio_set_value(d->shutdown_gpio, 1);
+		gpio_set_value(d->shutdown_gpio, 0);
 		msleep(MCU_SETTLE_MS);
 		break;
 	default:
@@ -113,15 +113,19 @@ static int misc_gpio_probe(struct platform_device *pdev)
 		}
 	}
 
+	/*
+	 * Low is the normal run state. Driving the line high here requests
+	 * a restart from the MCU and makes cold boots reset after ~1.5 s.
+	 */
 	ret = devm_gpio_request_one(d->dev, d->shutdown_gpio,
-				    GPIOF_OUT_INIT_HIGH,
+				    GPIOF_OUT_INIT_LOW,
 				    "mcu_shutdown_control");
 	if (ret) {
 		dev_err(d->dev, "cannot request shutdown GPIO%d: %d\n",
 			d->shutdown_gpio, ret);
 		return ret;
 	}
-	dev_info(d->dev, "mcu_shutdown_control on GPIO%d\n",
+	dev_info(d->dev, "mcu_shutdown_control on GPIO%d (low)\n",
 		 d->shutdown_gpio);
 
 	d->mcu_gpio = of_get_named_gpio(np, "mcu,gpio", 0);

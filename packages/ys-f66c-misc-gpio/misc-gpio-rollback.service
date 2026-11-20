@@ -1,0 +1,13 @@
+[Unit]
+Description=YS-F66C misc-gpio rollback guard
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Before=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/misc-gpio-rollback
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

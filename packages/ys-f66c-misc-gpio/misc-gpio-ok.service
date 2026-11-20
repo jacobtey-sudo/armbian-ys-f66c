@@ -1,0 +1,6 @@
+[Unit]
+Description=YS-F66C misc-gpio boot success marker
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/misc-gpio-ok

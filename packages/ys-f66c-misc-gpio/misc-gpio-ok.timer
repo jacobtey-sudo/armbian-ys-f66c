@@ -1,0 +1,9 @@
+[Unit]
+Description=Mark YS-F66C misc-gpio boot successful after 90 s
+
+[Timer]
+OnBootSec=90s
+Unit=misc-gpio-ok.service
+
+[Install]
+WantedBy=timers.target

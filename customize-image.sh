@@ -23,7 +23,15 @@ Main() {
 			# Copy the desktop overlay (Plasma 6 settings, Maliit, SDDM)
 			# collected from the validated running system.
 			if [ -d /tmp/overlay ]; then
-				cp -a /tmp/overlay/. /
+				# The checkout is owned by the build user; system files must stay root-owned.
+				cp -a --no-preserve=ownership /tmp/overlay/. /
+				# Rebuild the schema cache so overlay gschema overrides take effect.
+				glib-compile-schemas /usr/share/glib-2.0/schemas || true
+				# Register the ys-osk: handler used by the Maliit settings item.
+				update-desktop-database /usr/share/applications || true
+				# Connect trusted Bluetooth audio devices after boot.
+				chmod 0755 /usr/local/bin/ys-f66c-bt-autoconnect || true
+				systemctl enable ys-f66c-bt-autoconnect.service || true
 			fi
 			;;
 		forky)

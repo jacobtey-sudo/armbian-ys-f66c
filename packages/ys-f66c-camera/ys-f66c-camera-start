@@ -3,9 +3,11 @@
 # (v4l2loopback virtual camera). All apps, including Kamoso, can use it.
 . /etc/default/ys-f66c-camera
 
+# The sensor's YUYV modes have device-specific frame rates (e.g. 25 fps at
+# 640x480), so let v4l2src negotiate the rate instead of forcing one.
 exec /usr/bin/gst-launch-1.0 -e \
 	v4l2src device=/dev/video0 ! \
-	video/x-raw,format=YUY2,width=${WIDTH},height=${HEIGHT},framerate=${FPS}/1,interlace-mode=progressive,colorimetry=2:4:5:1 ! \
+	video/x-raw,format=YUY2,width=${WIDTH},height=${HEIGHT} ! \
 	videoflip method=${ROTATE} ! \
 	videoconvert ! \
 	v4l2sink device=/dev/video10 sync=false

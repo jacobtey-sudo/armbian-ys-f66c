@@ -1,0 +1,8 @@
+#!/bin/sh
+# Reset the rollback counter after a stable boot.
+set -eu
+
+STATE="/var/lib/misc-gpio-rollback"
+[ -d "${STATE}" ] || exit 0
+echo 0 >"${STATE}/count"
+logger -t misc-gpio-rollback "boot ok; counter reset"

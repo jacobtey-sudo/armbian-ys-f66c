@@ -20,7 +20,7 @@ function post_family_config__ys_f66c_serial_console() {
 # service needs gst-launch-1.0.
 # Maliit is KWin's virtual keyboard provider and the only OSK on the image
 # (Onboard removed). Verified 14.11.2026 in Plasma 6 Wayland and SDDM.
-PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils maliit-keyboard maliit-framework libmaliit-plugins2"
+PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils maliit-keyboard maliit-framework libmaliit-plugins2 synaptic yakuake plasma-widgets-addons"
 
 # WiFi: two hardware revisions exist. The AP6212 revision (SDIO 02d0:a9a6)
 # uses the in-tree brcmfmac. The AIC8800 revision (SDIO c8a1) uses the Radxa
@@ -213,23 +213,35 @@ function post_family_config__ys_f66c_use_mainline_uboot() {
     }
 }
 
-# Power button (short press) opens the KDE logout / shutdown dialog.
-# powerdevil handles the key itself and inhibits logind's power key.
+# Power button (short press) opens the KDE logout / shutdown dialog, and the
+# DSI panel must stay on: DPMS off/on corrupts it.
 # SuspendSession::LogoutDialogMode == 16; key is powerButtonAction (lowercase)
 # in the per-action group [<profile>][HandleButtonEvents].
-function post_family_tweaks__ys_f66c_power_button() {
-	display_alert "$BOARD" "KDE power button -> logout/shutdown dialog" "info"
+function post_family_tweaks__ys_f66c_powerdevil() {
+	display_alert "$BOARD" "Configuring powerdevil (keep display on, power button dialog)" "info"
 	local g
 	for g in "${SDCARD}/etc/xdg/powerdevilrc" \
 	         "${SDCARD}/etc/skel/.config/powerdevilrc"; do
 		install -d -m 0755 "$(dirname "$g")"
 		cat > "$g" <<-'EOT'
+			[AC][Display]
+			DimDisplayWhenIdle=false
+			TurnOffDisplayWhenIdle=false
+
 			[AC][HandleButtonEvents]
 			powerButtonAction=16
-			
+
+			[Battery][Display]
+			DimDisplayWhenIdle=false
+			TurnOffDisplayWhenIdle=false
+
 			[Battery][HandleButtonEvents]
 			powerButtonAction=16
-			
+
+			[LowBattery][Display]
+			DimDisplayWhenIdle=false
+			TurnOffDisplayWhenIdle=false
+
 			[LowBattery][HandleButtonEvents]
 			powerButtonAction=16
 		EOT
@@ -385,6 +397,20 @@ function post_family_tweaks_bsp__ys_f66c_sddm_rotation() {
 	EOT
 }
 
+# Touch input must match the greeter rotation. The greeter runs
+# "xrandr --rotate right", so the touchscreen needs that matrix.
+function post_family_tweaks_bsp__ys_f66c_touch_rotation() {
+	display_alert "$BOARD" "Installing YS-F66C touch rotation" "info"
+	install -d -m 0755 "${destination}/etc/X11/xorg.conf.d"
+	cat > "${destination}/etc/X11/xorg.conf.d/99-ys-f66c-touchscreen.conf" <<-'EOT'
+		Section "InputClass"
+		        Identifier "ys-f66c touchscreen rotation"
+		        MatchIsTouchscreen "on"
+		        Option "TransformationMatrix" "0 1 0 -1 0 1 0 0 1"
+		EndSection
+	EOT
+}
+
 # The image enables a serial getty for ttyFIQ0, but this kernel has no
 # fiq-debugger device. The getty's BindsTo=dev-ttyFIQ0.device makes every boot
 # wait 90 seconds at getty.target; the panel then sits on a black screen with
@@ -397,17 +423,8 @@ function post_family_tweaks__ys_f66c_disable_fiq_getty() {
 }
 
 # DPMS off/on corrupts the DSI panel. Keep the display on.
-function post_family_tweaks__ys_f66c_no_screen_off() {
-	display_alert "$BOARD" "Disabling automatic display power-off" "info"
-	for profile in AC Battery LowBattery; do
-		chroot_sdcard kwriteconfig6 --file /etc/xdg/powerdevilrc \
-			--group "$profile" --group Display \
-			--key TurnOffDisplayWhenIdle --type bool false
-		chroot_sdcard kwriteconfig6 --file /etc/xdg/powerdevilrc \
-			--group "$profile" --group Display \
-			--key DimDisplayWhenIdle --type bool false
-	done
-}
+# (Handled by post_family_tweaks__ys_f66c_powerdevil above.)
+
 
 # MCU power/heartbeat control: Android's misc_gpio driver equivalent.
 # Drives mcu_shutdown_control low before poweroff/halt and high before restart
@@ -429,16 +446,81 @@ function post_family_tweaks__ys_f66c_misc_gpio() {
 	fi
 	chroot_sdcard depmod -a "${kv}"
 	install -D -m 0644 "${src}/misc-gpio.conf" "${SDCARD}/etc/modules-load.d/misc-gpio.conf"
+	install -D -m 0755 "${src}/misc-gpio-rollback" "${SDCARD}/usr/local/sbin/misc-gpio-rollback"
+	install -D -m 0755 "${src}/misc-gpio-ok" "${SDCARD}/usr/local/sbin/misc-gpio-ok"
+	install -D -m 0644 "${src}/misc-gpio-rollback.service" "${SDCARD}/etc/systemd/system/misc-gpio-rollback.service"
+	install -D -m 0644 "${src}/misc-gpio-ok.service" "${SDCARD}/etc/systemd/system/misc-gpio-ok.service"
+	install -D -m 0644 "${src}/misc-gpio-ok.timer" "${SDCARD}/etc/systemd/system/misc-gpio-ok.timer"
+	chroot_sdcard systemctl enable misc-gpio-rollback.service
+	chroot_sdcard systemctl enable misc-gpio-ok.timer
 	rm -rf "${SDCARD}/usr/src/misc-gpio"
 }
 
-# SDDM greeter: keep the working Breeze on-screen keyboard and avoid the
-# Qt 6.8.2 qtvirtualkeyboard hang. Plasma uses Maliit through KWin.
+# SDDM greeter on-screen keyboard. Maliit has no Qt 6 input context plugin, so
+# the Qt 6 greeter cannot use it. Use Qt Virtual Keyboard (Breeze style).
 function post_family_tweaks_bsp__ys_f66c_sddm_inputmethod() {
-	display_alert "$BOARD" "Installing YS-F66C SDDM InputMethod=none" "info"
+	display_alert "$BOARD" "Installing YS-F66C SDDM on-screen keyboard" "info"
 	install -d -m 0755 "${destination}/etc/sddm.conf.d"
 	cat > "${destination}/etc/sddm.conf.d/ys-f66c-inputmethod.conf" <<-'EOT'
 		[General]
-		InputMethod=none
+		InputMethod=qtvirtualkeyboard
+		GreeterEnvironment=QML_DISABLE_DISK_CACHE=1
 	EOT
+}
+
+# Qt 6.8.2 in trixie trusts the internal offsets of QML disk-cache files. A
+# corrupted ~/.cache/*/qmlcache/*.qmlc makes KWin, plasmashell and Discover
+# crash in QV4::CompiledData::CompilationUnit::loadFromDisk() / stringAtInternal().
+# The cache is only a startup optimization, so disable it until Debian has a
+# fixed Qt. Verified on hardware 19.11.2026: KWin Wayland and X11 stayed up
+# without new core dumps.
+function post_family_tweaks__ys_f66c_qml_cache() {
+	display_alert "$BOARD" "Disabling QML disk cache (Qt 6.8.2 crash workaround)" "info"
+	local envfile="${SDCARD}/etc/environment"
+	touch "$envfile"
+	if ! grep -q '^QML_DISABLE_DISK_CACHE=' "$envfile"; then
+		printf '%s\n' 'QML_DISABLE_DISK_CACHE=1' >> "$envfile"
+	fi
+}
+
+# The desktop overlay is checked out by a normal user. Make sure the files it
+# installs into system paths do not stay owned by UID 1000 on the target.
+function post_family_tweaks__ys_f66c_overlay_permissions() {
+	display_alert "$BOARD" "Normalizing overlay file ownership" "info"
+	chown root:root "${SDCARD}" "${SDCARD}/etc" 2>/dev/null || true
+	for dir in \
+		"${SDCARD}/etc/skel" \
+		"${SDCARD}/etc/environment.d" \
+		"${SDCARD}/etc/systemd/user" \
+		"${SDCARD}/usr/share/plasma/plasmoids" \
+		"${SDCARD}/usr/lib/aarch64-linux-gnu/qt6/qml/org/kde/appletdecoration" \
+		"${SDCARD}/usr/lib/aarch64-linux-gnu/qt6/plugins/ksystemstats"; do
+		if [ -d "$dir" ]; then
+			chown -R root:root "$dir"
+		fi
+	done
+}
+
+# The EMMC widget reads Android userdata. Mount it read-only; keep eMMC intact.
+# The image step rewrites /etc/fstab after the hooks run, so use a systemd
+# service instead of an fstab entry.
+function post_family_tweaks__ys_f66c_emmc_mount() {
+	display_alert "$BOARD" "Mounting eMMC userdata read-only for the EMMC widget" "info"
+	install -d -m 0755 "${SDCARD}/mnt/emmc" "${SDCARD}/usr/lib/systemd/system"
+	cat > "${SDCARD}/usr/lib/systemd/system/ys-f66c-emmc-mount.service" <<-'EOT'
+		[Unit]
+		Description=Mount eMMC userdata read-only (YS-F66C)
+		After=local-fs.target
+		Before=graphical.target
+
+		[Service]
+		Type=oneshot
+		RemainAfterExit=yes
+		ExecStartPre=/bin/mkdir -p /mnt/emmc
+		ExecStart=/bin/sh -c 'mountpoint -q /mnt/emmc || mount -o ro,noatime /dev/disk/by-uuid/8028e49a-8638-4f22-9ea0-8a524a598916 /mnt/emmc || true'
+
+		[Install]
+		WantedBy=multi-user.target
+	EOT
+	chroot_sdcard systemctl --no-reload enable ys-f66c-emmc-mount.service
 }

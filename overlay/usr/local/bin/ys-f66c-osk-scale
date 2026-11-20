@@ -1,0 +1,39 @@
+#!/bin/sh
+# Set the Maliit on-screen keyboard size.
+# Usage: ys-f66c-osk-scale [small|medium|large]
+# Without a valid size argument, show a chooser.
+
+KEY=org.maliit.keyboard.maliit
+
+apply() {
+	gsettings set "$KEY" device "ys-f66c-$1"
+	# Maliit reads the device profile only at start, so restart the keyboard.
+	pkill -f maliit-keyboard 2>/dev/null || true
+}
+
+case "$1" in
+	small|medium|large)
+		apply "$1"
+		exit 0
+		;;
+esac
+
+current=$(gsettings get "$KEY" device 2>/dev/null | tr -d "'")
+on_s=off
+on_m=off
+on_l=off
+case "$current" in
+	ys-f66c-small) on_s=on ;;
+	ys-f66c-large) on_l=on ;;
+	*) on_m=on ;;
+esac
+
+want=$(kdialog --title "Maliit keyboard size" --radiolist \
+	"Choose the on-screen keyboard size:" \
+	small "Small" "$on_s" \
+	medium "Medium" "$on_m" \
+	large "Large" "$on_l") || exit 0
+
+case "$want" in
+	small|medium|large) apply "$want" ;;
+esac

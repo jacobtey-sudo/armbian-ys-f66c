@@ -32,9 +32,9 @@ DialogWidth=720
 positions={"1280x800":[],"800x1280":[]}
 
 [Containments][2][Wallpaper][org.kde.image][General]
-Image=~/.local/share/wallpapers/ferns/
-PreviewImage=~/.local/share/wallpapers/ferns/
-SlidePaths=~/.local/share/wallpapers/,/usr/share/wallpapers/
+Image=/usr/share/wallpapers/Next/
+PreviewImage=/usr/share/wallpapers/Next/
+SlidePaths=/usr/share/wallpapers/
 
 [Containments][26]
 activityId=
@@ -54,7 +54,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][26][Applets][27][Configuration][General]
-launchers=applications:systemsettings.desktop,preferred://filemanager,applications:konqbrowser.desktop,applications:synaptic.desktop,applications:org.kde.yakuake.desktop,applications:org.kde.spectacle.desktop,applications:ai.opencode.desktop.desktop
+launchers=applications:systemsettings.desktop,preferred://filemanager,applications:konqbrowser.desktop,applications:org.kde.discover.desktop,applications:org.kde.yakuake.desktop,applications:org.kde.spectacle.desktop
 
 [Containments][26][Applets][34]
 immutability=1
@@ -132,25 +132,25 @@ rangeFrom=0
 rangeTo=100
 
 [Containments][26][Applets][41][Configuration][SensorColors]
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/free=88,233,61
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/freePercent=61,233,86
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/used=61,174,233
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/usedPercent=61,174,233
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/free=88,233,61
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/freePercent=61,233,86
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/used=61,174,233
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/usedPercent=61,174,233
 disk/all/used=61,125,233
 disk/all/usedPercent=61,174,233
 lmsensors=67,61,233
 
 [Containments][26][Applets][41][Configuration][SensorLabels]
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/free=EMMC — свободно
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/total=EMMC — всего
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/used=EMMC — занято
-disk/215f0591-7348-4e72-ae9d-10249e81cd2f/usedPercent=EMMC
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/free=EMMC — свободно
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/total=EMMC — всего
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/used=EMMC — занято
+disk/8028e49a-8638-4f22-9ea0-8a524a598916/usedPercent=EMMC
 disk/all/used=EMMC Использованный объём
 
 [Containments][26][Applets][41][Configuration][Sensors]
-highPrioritySensorIds=["disk/215f0591-7348-4e72-ae9d-10249e81cd2f/usedPercent"]
+highPrioritySensorIds=["disk/8028e49a-8638-4f22-9ea0-8a524a598916/usedPercent"]
 lowPrioritySensorIds=
-totalSensors=["disk/215f0591-7348-4e72-ae9d-10249e81cd2f/free","disk/215f0591-7348-4e72-ae9d-10249e81cd2f/total"]
+totalSensors=["disk/8028e49a-8638-4f22-9ea0-8a524a598916/free","disk/8028e49a-8638-4f22-9ea0-8a524a598916/total"]
 
 [Containments][26][Applets][45]
 immutability=1
