@@ -1,0 +1,25 @@
+#!/bin/sh
+# Install the FlClash proxy client (arm64) from the pinned release.
+# The image does not ship the .deb. Download it and verify the SHA256.
+set -eu
+
+VERSION="0.9.4"
+URL="https://github.com/chen08209/FlClash/releases/download/v${VERSION}/FlClash-${VERSION}-linux-arm64.deb"
+SHA256="8882ca6e0c21784dacd52351ee457193e4b208d112a1e18143abc6c99a76ece7"
+
+if dpkg-query -W -f='${Version}\n' flclash 2>/dev/null | grep -q "^${VERSION}"; then
+	echo "flclash ${VERSION} is installed"
+	exit 0
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "${tmp}"' EXIT
+
+echo "downloading FlClash ${VERSION} (arm64)"
+if ! curl -fSL --retry 3 --connect-timeout 20 -o "${tmp}/flclash.deb" "${URL}"; then
+	echo "curl failed; retry with wget" >&2
+	wget -q -O "${tmp}/flclash.deb" "${URL}"
+fi
+echo "${SHA256}  ${tmp}/flclash.deb" | sha256sum -c -
+
+DEBIAN_FRONTEND=noninteractive dpkg -i "${tmp}/flclash.deb"

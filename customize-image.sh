@@ -32,6 +32,10 @@ Main() {
 				# Connect trusted Bluetooth audio devices after boot.
 				chmod 0755 /usr/local/bin/ys-f66c-bt-autoconnect || true
 				systemctl enable ys-f66c-bt-autoconnect.service || true
+				# Install the FlClash proxy client (arm64). Downloads a pinned .deb.
+				if [ -x /usr/local/bin/ys-f66c-install-flclash ]; then
+					/usr/local/bin/ys-f66c-install-flclash || echo "WARNING: FlClash install failed"
+				fi
 			fi
 			;;
 		forky)

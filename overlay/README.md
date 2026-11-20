@@ -13,6 +13,12 @@
 - `etc/skel/.config/gtk-3.0/`, `gtk-4.0/` — тема GTK;
 - прочие `*-rc` приложений KDE.
 
+Скрипты:
+
+- `usr/local/bin/ys-f66c-install-flclash` — ставит FlClash (arm64) из
+  зафиксированного релиза. SHA256 проверяется, `.deb` в git не хранится.
+  `customize-image.sh` запускает скрипт при сборке образа.
+
 `scripts/build.sh` копирует `overlay/.` поверх board support, а
 `scripts/install-overlay.sh` ставит то же самое на живую систему.
 
