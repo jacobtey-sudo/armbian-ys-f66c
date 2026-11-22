@@ -118,6 +118,21 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 `/etc/hostname` содержит значение по умолчанию `ys-f66c`, поэтому имя,
 заданное вручную, не перезаписывается.
 
+## Mesa и Kamoso
+
+Mali-G52 (Panfrost) в Mesa 25.0.7 из trixie ломает стек в `libgallium`
+(Debian bug #1116427). Приложения на Qt5 GL падают при запуске — например,
+Kamoso: `*** stack smashing detected ***`, следом `SIGABRT` или `SIGSEGV`.
+Исправление вошло в Mesa 25.2. `customize-image.sh` ставит Mesa из
+`trixie-backports` (сейчас 26.1.6) и правит битый список файлов dpkg, из-за
+которого установка падает.
+
+Проверка версии:
+
+```sh
+dpkg -l mesa-libgallium | tail -1
+```
+
 ## Что лежит в репозитории
 
 | Путь | Назначение |
@@ -134,7 +149,8 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 | `overlay/` | Файлы образа: настройки KDE и Maliit, звук, сервисы (см. `overlay/README.md`) |
 
 `config-example.conf` — стандартный шаблон Armbian. `customize-image.sh` —
-рабочий хук образа: копирует overlay, включает сервисы и ставит FlClash.
+рабочий хук образа: копирует overlay, включает сервисы, ставит FlClash и
+обновляет Mesa из `trixie-backports`.
 
 ## Прекомпилированные артефакты
 

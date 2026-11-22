@@ -37,6 +37,17 @@ Main() {
 					/usr/local/bin/ys-f66c-install-flclash || echo "WARNING: FlClash install failed"
 				fi
 			fi
+			# dpkg stops when a package file list has no final newline.
+			# The trixie rootfs ships such a list (libpathplan4).
+			for f in /var/lib/dpkg/info/*.list; do
+				[ -n "$(tail -c 1 "$f")" ] && printf '\n' >> "$f"
+			done
+			# Mali-G52 Panfrost crashes Qt5 GL apps (Debian #1116427).
+			# Mesa 25.2 fixes this. Backports provides it.
+			apt-get install -y --no-install-recommends -t trixie-backports \
+				libgl1-mesa-dri libegl-mesa0 libglx-mesa0 libgbm1 mesa-libgallium \
+				mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers ||
+				echo "WARNING: Mesa backports install failed"
 			;;
 		forky)
 			# your code here
