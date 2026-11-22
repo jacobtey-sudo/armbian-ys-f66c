@@ -270,6 +270,11 @@
 	/delete-node/ opp-800000000;
 };
 
+/* Enable the SoC thermal sensor: CPU/GPU throttling and the hwmon temperature. */
+&tsadc {
+	status = "okay";
+};
+
 &i2c0 {
 	status = "okay";
 
