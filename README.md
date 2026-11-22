@@ -145,7 +145,7 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 | `packages/ys-f66c-misc-gpio/misc-gpio-*.ko` | То же для драйвера MCU (исходник `misc-gpio.c` рядом) |
 | `overlay/.../appletdecoration/libappletdecorationplugin.so` | Плагин Window Buttons, собран под arm64 из upstream 0.14.0 |
 | `overlay/.../ksystemstats/ksystemstats_plugin_disk.so` | ksystemstats 6.3.4 с патчем для раздела данных eMMC |
-| `docs/YS-F66C Specifications (Chinese).pdf` | Спецификация платы от производителя (китайский язык) |
+| `docs/YS-F66C Specifications (Chinese).pdf` | Спецификация платы от производителя (китайский язык). В открытом доступе её нет — хранится здесь как единственный источник |
 
 ## Ключевые исправления
 
