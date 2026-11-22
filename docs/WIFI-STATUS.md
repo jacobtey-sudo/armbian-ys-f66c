@@ -1,6 +1,6 @@
 # WiFi YS-F66C (RK3566, Armbian vendor 6.1) — РАБОТАЕТ
 
-Статус на 08.11.2026: WiFi поднят и проверен на железе. BT — не тестирован (см. ниже).
+Статус: WiFi поднят и проверен на железе. BT — не тестирован (см. ниже).
 
 ## Что за чип
 
@@ -21,7 +21,7 @@ SDIO висит на `sdmmc1` (`fe2c0000`), алиас `mmc2`.
 ### 1. SDIO не инициализировался: `mmc2: tuning execution failed: -5`
 
 У нашего `&sdmmc1` не был задан `max-frequency`, поэтому контроллер лез в SDR104
-(148.5 МГц) и валил тюнинг. Android/вендор ставят лимит **50 МГц**
+(148.5 МГц) и валил тюнинг. Вендор ставит лимит **50 МГц**
 (`max-frequency = <0x2faf080>` = 50000000) — тогда карта поднимается.
 
 Фикс в `dt/rk3566-ys-f66c.dts`:
@@ -29,7 +29,7 @@ SDIO висит на `sdmmc1` (`fe2c0000`), алиас `mmc2`.
 ```dts
 &sdmmc1 {
 	...
-	/* Android: max-frequency = 50000000; SDR104 tuning fails above this. */
+	/* Vendor: max-frequency = 50000000; SDR104 tuning fails above this. */
 	max-frequency = <50000000>;
 	...
 };
@@ -58,7 +58,7 @@ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc) \
 ### 3. Драйвер AIC8800 (не Broadcom)
 
 Исходника AIC8800 в дереве vendor-ядра 6.1 нет; готовые `aic8800_*.ko` в
-`vendor_modules/` собраны под Android-ядро **4.19.232** — не подходят.
+`vendor_modules/` собраны под вендорское ядро **4.19.232** — не подходят.
 
 Воспроизводимое решение — расширение Armbian (конфиг платы):
 
@@ -100,10 +100,10 @@ options aic8800_bsp aic_fw_path=/lib/firmware/aic8800/SDIO/aic8800D80
 Результат (после перезагрузки — первый probe):
 
 ```
-wlan0  UP  192.168.1.11/24   (MAC 00:11:22:33:44:55)
-iw dev wlan0 link → Connected to 00:11:22:33:44:77, SSID "ExampleNet",
+wlan0  UP  (адрес получен по DHCP)
+iw dev wlan0 link → Connected, SSID "ExampleNet",
                     freq 2412, HE (Wi-Fi 6), signal -69 dBm
-ping -I wlan0 192.168.1.1 → 0% loss
+ping -I wlan0 <шлюз> → 0% loss
 ping -I wlan0 1.1.1.1      → 0% loss
 curl --interface wlan0 https://www.google.com → http=200
 ```
@@ -121,7 +121,7 @@ BSSID и включённом PMF ассоциация рвётся на 4-way h
 Рабочая настройка (BSSID — конкретно этого AP):
 
 ```bash
-nmcli connection modify examplenet 802-11-wireless.bssid 00:11:22:33:44:77
+nmcli connection modify examplenet 802-11-wireless.bssid <BSSID этого AP>
 nmcli connection modify examplenet wifi-sec.pmf 3     # PMF disabled, WPA2-PSK
 nmcli connection up examplenet
 ```
@@ -134,7 +134,7 @@ nmcli connection up examplenet
 * `dt/rk3566-ys-f66c.dts` — `&sdmmc1 { max-frequency = <50000000>; }`
 * `config/boards/ys-f66c.csc` — `AIC8800_TYPE="sdio"` + `enable_extension "radxa-aic8800"`
 * Ядро на плате: `6.1.172-vendor-rk35xx` (LOCALVERSION), `/boot/vmlinuz-...`
-* Rучная копия модулей (fallback): `~/board/aic8800-modules/`
+* Ручная копия модулей (fallback): локальный каталог с модулями AIC8800.
 
 ## BT (следующий шаг)
 

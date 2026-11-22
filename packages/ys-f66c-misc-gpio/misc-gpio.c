@@ -2,7 +2,7 @@
 /*
  * YS-F66C MCU power/heartbeat control.
  *
- * This is the Linux equivalent of the Android misc_gpio driver:
+ * This is the Linux equivalent of the vendor misc_gpio driver:
  *  - mcu_shutdown_control is low in normal operation. Keep it low on
  *    restart and poweroff; the PMIC handles both. Do not drive it high.
  *  - mcu,gpio is toggled as a heartbeat every 3 s.

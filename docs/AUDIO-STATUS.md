@@ -15,7 +15,7 @@
 
 Проводные наушники определяются через `rk-headset` (GPIO3_D1, pinctrl
 `hp_det`). В DTS добавлены узел `rk_headset` и pinctrl с pull-down; полярность
-совпадает с Android: при вставке GPIO читается высоким.
+совпадает с вендорской конфигурацией: при вставке GPIO читается высоким.
 
 `ys-f66c-headset-route` слушает extcon и переключает codec:
 

@@ -37,7 +37,7 @@
 
 	/*
 	 * Физическая кнопка питания: GPIO3_C1 (bank 3, pin 17), active-low.
-	 * В вендорском Android DTS — gpio-keys/power с linux,code = KEY_POWER.
+	 * В вендорском DTS — gpio-keys/power с linux,code = KEY_POWER.
 	 * Без этого узла кнопка не генерирует событий вообще (RK809 pwrkey —
 	 * это отдельный вход PMIC, а не сама кнопка).
 	 */
@@ -58,7 +58,7 @@
 	};
 
 	/*
-	 * 3.5-mm headphone jack detect. Android uses the same GPIO3_D1
+	 * 3.5-mm headphone jack detect. The vendor kernel uses the same GPIO3_D1
 	 * (pinctrl hp_det) and the rk_headset driver. The driver reports
 	 * EXTCON_JACK_HEADPHONE; userspace switches Playback Path between
 	 * HP (jack inserted, speaker amp off) and SPK (jack removed).
@@ -623,7 +623,7 @@
 	status = "okay";
 	supports-sdio;
 	bus-width = <4>;
-	/* Android: max-frequency = 50000000; SDR104 tuning fails above this. */
+	/* Vendor: max-frequency = 50000000; SDR104 tuning fails above this. */
 	max-frequency = <50000000>;
 	disable-wp;
 	cap-sd-highspeed;
@@ -825,14 +825,14 @@
 		disable-delay-ms = <60>;
 		init-delay-ms = <60>;
 
-		/* DSI parameters from live Android kernel DT (dsi,flags=0xa03) */
+		/* DSI parameters from the live vendor kernel DT (dsi,flags=0xa03) */
 		dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 			       MIPI_DSI_MODE_NO_EOT_PACKET | MIPI_DSI_MODE_LPM)>;
 		dsi,format = <MIPI_DSI_FMT_RGB888>;
 		dsi,lanes = <4>;
 
 		/* Полная init-таблица вендора (panel-initcode224), 983 байта.
-		 * Это рабочая конфигурация Android (lcd_mipi_param=224).
+		 * Это рабочая конфигурация вендора (lcd_mipi_param=224).
 		 * U-Boot у нас mainline, панель не инициализирует, поэтому таблицу
 		 * отправляет ядро в panel_simple_prepare().
 		 */
@@ -915,7 +915,7 @@
 		 * vback, vfront, hsync, vsync.
 		 * delay_and_timing224 = 70000000, 800, 1280,
 		 *   40, 60, 12, 18, 30, 4.
-		 * Android-лог даёт тот же режим:
+		 * Вендорский лог даёт тот же режим:
 		 * "H: 0800 0860 0890 0930, V: 1280 1298 1302 1314".
 		 */
 		display-timings {

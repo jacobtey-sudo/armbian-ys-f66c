@@ -19,14 +19,14 @@ function post_family_config__ys_f66c_serial_console() {
 # enough: Kamoso for the desktop plus v4l-utils for CLI testing. The rotation
 # service needs gst-launch-1.0.
 # Maliit is KWin's virtual keyboard provider and the only OSK on the image
-# (Onboard removed). Verified 14.11.2026 in Plasma 6 Wayland and SDDM.
+# (Onboard removed). Verified in Plasma 6 Wayland and SDDM.
 PACKAGE_LIST_BOARD="kamoso v4l-utils gstreamer1.0-tools pulseaudio-utils maliit-keyboard maliit-framework libmaliit-plugins2 synaptic yakuake plasma-widgets-addons"
 
 # WiFi: two hardware revisions exist. The AP6212 revision (SDIO 02d0:a9a6)
 # uses the in-tree brcmfmac. The AIC8800 revision (SDIO c8a1) uses the Radxa
 # DKMS package from the radxa-aic8800 extension. The extension is installed
 # on every image; its modules do not bind on AP6212 units.
-# Verified on hardware: AIC 08.11.2026 (HE, ping/HTTP OK), AP6212 09.11.2026.
+# Verified on hardware: AIC (HE, ping/HTTP OK), AP6212.
 AIC8800_TYPE="sdio"
 enable_extension "radxa-aic8800"
 
@@ -37,7 +37,7 @@ enable_extension "radxa-aic8800"
 #     This is the default DTB.
 #   AIC8800 revision: hci_uart_aic asks the AIC SDIO driver for the firmware.
 #     This revision uses rk3566-ys-f66c-aic.dtb (see the selector below).
-# Verified on hardware 09.11.2026 (AP6212): hci0 up, scan finds devices.
+# Verified on hardware (AP6212): hci0 up, scan finds devices.
 function post_family_tweaks_bsp__ys_f66c_bt_unblock() {
 	display_alert "$BOARD" "Installing YS-F66C BT rfkill unblock service" "info"
 	install -d -m 0755 "${destination}/usr/lib/systemd/system"
@@ -181,13 +181,13 @@ function post_family_config__ys_f66c_pin_kernel_commit() {
 # DSI-хост ищет панель в своём probe, задолго до монтирования rootfs. Пока
 # драйвер панели лежит модулем в rootfs, drm_of_find_panel_or_bridge()
 # возвращает -EPROBE_DEFER, DRM-подсистема зацикливается на повторном
-# probe и загрузка никогда не доходит до init (проверено на UART 02.11.2026).
+# probe и загрузка никогда не доходит до init (проверено на UART).
 function custom_kernel_config__ys_f66c_display_builtin() {
 	# Анонс правок в хэш-массиве нужен в ОБЕИХ фазах вызова хука.
 	# Во второй фазе .config ещё нет — если анонсировать только внутри
 	# "if [[ -f .config ]]", версия артефакта ядра не меняется, Armbian
 	# берёт ядро из кэша и правки .config никуда не попадают (проверено
-	# 02.11.2026: сборка молча использовала старое ядро).
+	# сборка молча использовала старое ядро).
 	kernel_config_modifying_hashes+=("DRM_PANEL_SIMPLE=y")
 	kernel_config_modifying_hashes+=("BACKLIGHT_PWM=y")
 	if [[ -f .config ]]; then
@@ -316,7 +316,7 @@ function post_family_tweaks__ys_f66c_camera() {
 	rm -f "${SDCARD}/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstlibcamera.so"
 }
 
-# The RK817 codec has one output path at a time. Android used the rk_headset
+# The RK817 codec has one output path at a time. The vendor kernel used the rk_headset
 # driver on GPIO3_D1 and the codec's spk-ctl GPIO to mute the speakers when a
 # 3.5-mm plug was inserted. The kernel already has CONFIG_RK_HEADSET=y; this
 # installs the userspace bridge from extcon to the codec's Playback Path.
@@ -443,7 +443,7 @@ function post_family_tweaks__ys_f66c_disable_fiq_getty() {
 # (Handled by post_family_tweaks__ys_f66c_powerdevil above.)
 
 
-# MCU power/heartbeat control: Android's misc_gpio driver equivalent.
+# MCU power/heartbeat control: equivalent of the vendor misc_gpio driver.
 # Drives mcu_shutdown_control low before poweroff/halt and high before restart
 # (with the same ~2 s settle), and toggles mcu,gpio as a 3 s heartbeat.
 function post_family_tweaks__ys_f66c_misc_gpio() {
@@ -489,7 +489,7 @@ function post_family_tweaks_bsp__ys_f66c_sddm_inputmethod() {
 # corrupted ~/.cache/*/qmlcache/*.qmlc makes KWin, plasmashell and Discover
 # crash in QV4::CompiledData::CompilationUnit::loadFromDisk() / stringAtInternal().
 # The cache is only a startup optimization, so disable it until Debian has a
-# fixed Qt. Verified on hardware 19.11.2026: KWin Wayland and X11 stayed up
+# fixed Qt. Verified on hardware: KWin Wayland and X11 stayed up
 # without new core dumps.
 function post_family_tweaks__ys_f66c_qml_cache() {
 	display_alert "$BOARD" "Disabling QML disk cache (Qt 6.8.2 crash workaround)" "info"
@@ -518,7 +518,7 @@ function post_family_tweaks__ys_f66c_overlay_permissions() {
 	done
 }
 
-# The EMMC widget reads Android userdata. Mount it read-only; keep eMMC intact.
+# The EMMC widget reads the eMMC data partition. Mount it read-only; keep eMMC intact.
 # The image step rewrites /etc/fstab after the hooks run, so use a systemd
 # service instead of an fstab entry.
 function post_family_tweaks__ys_f66c_emmc_mount() {

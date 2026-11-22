@@ -1,12 +1,12 @@
-# ys-f66c: панель (2026-11-08)
+# ys-f66c: панель
 
-Плата: 192.168.1.10.
+Плата: YS-F66C.
 
 ## Итог
 
 Панель работает под Armbian. Изображение видно.
 
-Рабочая конфигурация: Android-профиль 224.
+Рабочая конфигурация: профиль панели 224.
 
 ## Причина прошлых сбоев
 
@@ -16,7 +16,7 @@
 ## Рабочий конфиг
 
 - Полная `panel-init-sequence` из U-Boot `panel-initcode224` (983 байта).
-  Таблица побайтно равна `mipi_para_choose/panel-initcode224` живого Android.
+  Таблица побайтно равна `mipi_para_choose/panel-initcode224` вендорского ядра.
 - Тайминг 224: 70 МГц, hback 40, hfront 60, hsync 30, vback 12, vfront 18, vsync 4.
 - `dsi,flags = 0xa03` (VIDEO | BURST | NO_EOT_PACKET | LPM).
 - `dsi,lanes = 4`.
@@ -39,6 +39,4 @@
 ## Файлы
 
 - DTS: `kernel/rk35xx-vendor-6.1/dt/rk3566-ys-f66c.dts`
-- Эталон: `~/board/android-reference-224.md`
-- Дамп живого DT Android: `~/board/android-dump/`
-- Подробный статус: `~/board/DSI-PANEL-STATUS.md`
+- Вендорский DTS 4.19: `docs/reference/vendor-4.19/rk3566-ys-f66c.dts`

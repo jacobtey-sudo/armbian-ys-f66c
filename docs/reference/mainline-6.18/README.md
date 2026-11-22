@@ -27,7 +27,7 @@ Custom Armbian support for the Yisheng YS-F66C industrial tablet (RK3566, 4+32G,
 - `6.18/rk3566-ys-f66c-working-eth.dts` — intermediate state (Ethernet + USB, before HDMI)
 - `6.18/rk3566-ys-f66c.dts` — early minimal DTS
 - `6.18/boot.cmd` — U-Boot boot script
-- `rk3566-ys-f66c.dts` — vendor 4.19 DTS (Android/BSP)
+- `rk3566-ys-f66c.dts` — vendor 4.19 DTS (BSP)
 - `ys-f66c-4.19-changes.patch` — patches for 4.19
 
 ## Build
