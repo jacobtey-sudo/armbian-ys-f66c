@@ -135,6 +135,18 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 `config-example.conf` — стандартный шаблон Armbian. `customize-image.sh` —
 рабочий хук образа: копирует overlay, включает сервисы и ставит FlClash.
 
+## Прекомпилированные артефакты
+
+Часть файлов в репозитории — готовые бинарники; исходников в дереве нет.
+
+| Файл | Что это |
+|---|---|
+| `packages/v4l2loopback-*.ko` | Запасной модуль виртуальной камеры; используется, только если сборка из `packages/v4l2loopback-0.13.2.tar.gz` не удалась |
+| `packages/ys-f66c-misc-gpio/misc-gpio-*.ko` | То же для драйвера MCU (исходник `misc-gpio.c` рядом) |
+| `overlay/.../appletdecoration/libappletdecorationplugin.so` | Плагин Window Buttons, собран под arm64 из upstream 0.14.0 |
+| `overlay/.../ksystemstats/ksystemstats_plugin_disk.so` | ksystemstats 6.3.4 с патчем для раздела данных eMMC |
+| `docs/YS-F66C Specifications (Chinese).pdf` | Спецификация платы от производителя (китайский язык) |
+
 ## Ключевые исправления
 
 ### Панель
