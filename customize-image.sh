@@ -44,6 +44,7 @@ Main() {
 			done
 			# Mali-G52 Panfrost crashes Qt5 GL apps (Debian #1116427).
 			# Mesa 25.2 fixes this. Backports provides it.
+			apt-get update -qq || true
 			apt-get install -y --no-install-recommends -t trixie-backports \
 				libgl1-mesa-dri libegl-mesa0 libglx-mesa0 libgbm1 mesa-libgallium \
 				mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers ||
