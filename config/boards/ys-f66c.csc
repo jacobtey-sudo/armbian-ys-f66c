@@ -252,18 +252,35 @@ function post_family_tweaks__ys_f66c_powerdevil() {
 # the system bell for every key repeat. Each bell creates a new KWin audio
 # stream; with A2DP active this stalls the compositor (thousands of "Key repeat
 # discarded" messages) and loops the bell. The tablet has no need for an
-# audible bell, so disable it system-wide and for newly created users.
+# audible bell, so disable it system-wide, locked against user overrides, and
+# for newly created users.
 function post_family_tweaks__ys_f66c_disable_bell() {
 	display_alert "$BOARD" "Disabling the KDE system bell" "info"
-	local f
-	for f in "${SDCARD}/etc/xdg/kaccessrc" \
-	         "${SDCARD}/etc/skel/.config/kaccessrc"; do
-		install -d -m 0755 "$(dirname "$f")"
-		cat > "$f" <<-'EOT'
-			[Bell]
-			SystemBell=false
-		EOT
-	done
+	install -d -m 0755 "${SDCARD}/etc/xdg" "${SDCARD}/etc/skel/.config"
+
+	# The [$i] suffix makes the group immutable: a leftover
+	# ~/.config/kaccessrc with SystemBell=true cannot bring the loop back.
+	cat > "${SDCARD}/etc/xdg/kaccessrc" <<-'EOT'
+		[Bell][$i]
+		SystemBell=false
+	EOT
+	cat > "${SDCARD}/etc/skel/.config/kaccessrc" <<-'EOT'
+		[Bell]
+		SystemBell=false
+	EOT
+
+	# plasma-pa plays the "audio-volume-change" event on every volume key
+	# press, even when the volume is already at its limit. Holding the key at
+	# 0 %/100 % turns that into a ticking loop (and a stalled A2DP stream).
+	# The OSD already shows the volume, so turn the sound off.
+	cat > "${SDCARD}/etc/xdg/plasmaparc" <<-'EOT'
+		[General]
+		AudioFeedback=false
+	EOT
+	cat > "${SDCARD}/etc/skel/.config/plasmaparc" <<-'EOT'
+		[General]
+		AudioFeedback=false
+	EOT
 }
 
 # The internal camera is a portrait UVC sensor: the raw picture is turned 90
