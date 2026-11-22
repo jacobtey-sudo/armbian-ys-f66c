@@ -131,6 +131,7 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 | `docs/CAMERA.md` | Поворот камеры: сервис, настройка, ограничения |
 | `packages/` | Исходник v4l2loopback и файлы сервиса камеры |
 | `docs/reference/` | Справочные DTS/патчи других веток (в сборке не участвуют) |
+| `overlay/` | Файлы образа: настройки KDE и Maliit, звук, сервисы (см. `overlay/README.md`) |
 
 `config-example.conf` — стандартный шаблон Armbian. `customize-image.sh` —
 рабочий хук образа: копирует overlay, включает сервисы и ставит FlClash.

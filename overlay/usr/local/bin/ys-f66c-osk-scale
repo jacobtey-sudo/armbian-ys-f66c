@@ -3,6 +3,10 @@
 # Usage: ys-f66c-osk-scale [small|medium|large]
 # Without a valid size argument, show a chooser.
 
+# Maliit exports QT_WAYLAND_SHELL_INTEGRATION=inputpanel-shell; kdialog aborts
+# with it. Clear the variable before any Qt program starts.
+unset QT_WAYLAND_SHELL_INTEGRATION
+
 KEY=org.maliit.keyboard.maliit
 
 apply() {
@@ -28,11 +32,11 @@ case "$current" in
 	*) on_m=on ;;
 esac
 
-want=$(kdialog --title "Maliit keyboard size" --radiolist \
-	"Choose the on-screen keyboard size:" \
-	small "Small" "$on_s" \
-	medium "Medium" "$on_m" \
-	large "Large" "$on_l") || exit 0
+want=$(kdialog --title "Размер клавиатуры Maliit" --radiolist \
+	"Выберите размер экранной клавиатуры:" \
+	small "Маленький" "$on_s" \
+	medium "Средний" "$on_m" \
+	large "Большой" "$on_l") || exit 0
 
 case "$want" in
 	small|medium|large) apply "$want" ;;

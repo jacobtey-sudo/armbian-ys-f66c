@@ -19,6 +19,17 @@
   зафиксированного релиза. SHA256 проверяется, `.deb` в git не хранится.
   `customize-image.sh` запускает скрипт при сборке образа.
 
+Maliit (экранная клавиатура):
+
+- `usr/share/maliit/keyboard2/devices/ys-f66c-{small,medium,large}.json` — размеры;
+- `usr/share/glib-2.0/schemas/99-ys-f66c-maliit.gschema.override` — языки en/ru;
+- `usr/local/bin/ys-f66c-osk-scale` и
+  `usr/share/applications/ys-f66c-osk-scale.desktop` — выбор размера;
+- `usr/local/bin/xdg-open` — снимает `QT_WAYLAND_SHELL_INTEGRATION` от Maliit,
+  обрабатывает схему `ys-osk:`, остальные URL отдаёт `/usr/bin/xdg-open`;
+- `usr/lib/aarch64-linux-gnu/maliit/keyboard2/qml/keys/LanguageMenu.qml` —
+  пункт «Settings...» открывает `ys-osk:scale`.
+
 `scripts/build.sh` копирует `overlay/.` поверх board support, а
 `scripts/install-overlay.sh` ставит то же самое на живую систему.
 

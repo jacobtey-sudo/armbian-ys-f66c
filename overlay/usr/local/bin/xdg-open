@@ -1,0 +1,11 @@
+#!/bin/sh
+# Maliit exports QT_WAYLAND_SHELL_INTEGRATION=inputpanel-shell. Qt programs
+# started from the keyboard abort with it. KDE xdg-open also runs kde-open,
+# which ignores unknown schemes. Clear the variable and handle our scheme.
+unset QT_WAYLAND_SHELL_INTEGRATION
+
+case "${1:-}" in
+	ys-osk:*) exec /usr/local/bin/ys-f66c-osk-scale "$1" ;;
+esac
+
+exec /usr/bin/xdg-open "$@"
