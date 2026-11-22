@@ -522,11 +522,11 @@ function post_family_tweaks__ys_f66c_overlay_permissions() {
 # The image step rewrites /etc/fstab after the hooks run, so use a systemd
 # service instead of an fstab entry.
 function post_family_tweaks__ys_f66c_emmc_mount() {
-	display_alert "$BOARD" "Mounting eMMC userdata read-only for the EMMC widget" "info"
+	display_alert "$BOARD" "Mounting the eMMC data partition read-only for the EMMC widget" "info"
 	install -d -m 0755 "${SDCARD}/mnt/emmc" "${SDCARD}/usr/lib/systemd/system"
 	cat > "${SDCARD}/usr/lib/systemd/system/ys-f66c-emmc-mount.service" <<-'EOT'
 		[Unit]
-		Description=Mount eMMC userdata read-only (YS-F66C)
+		Description=Mount the eMMC data partition read-only (YS-F66C)
 		After=local-fs.target
 		Before=graphical.target
 
