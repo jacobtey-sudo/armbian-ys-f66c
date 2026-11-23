@@ -32,3 +32,7 @@
 будит аналоговый sink (`pactl suspend-sink`). Если в будущем будет принят
 патч codec, обновляющий `spk-ctl` прямо в `rk817_playback_path_config()`, этот
 обход можно убрать.
+
+---
+
+[← Bluetooth](BT-STATUS.md) · [Оглавление](../README.md#документация) · [Камера →](CAMERA.md)

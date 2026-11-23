@@ -51,3 +51,7 @@ gst-launch-1.0 v4l2src device=/dev/video10 num-buffers=1 ! jpegenc ! filesink lo
   сырую камеру без поворота. Поворот проверен в Kamoso.
 - Нагрузка: около 30 % одного ядра на поворот и около 60 % на предпросмотр
   Kamoso при 640×480@30.
+
+---
+
+[← Звук](AUDIO-STATUS.md) · [Оглавление](../README.md#документация) · [Mainline 6.18 →](reference/mainline-6.18/README.md)

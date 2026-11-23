@@ -153,6 +153,18 @@ dpkg -l mesa-libgallium | tail -1
 рабочий хук образа: копирует overlay, включает сервисы, ставит FlClash и
 обновляет Mesa из `trixie-backports`.
 
+## Документация
+
+| Документ | Содержание |
+| --- | --- |
+| [docs/PANEL-STATUS.md](docs/PANEL-STATUS.md) | Панель и подсветка: профиль, DSI-флаги, отладка |
+| [docs/WIFI-STATUS.md](docs/WIFI-STATUS.md) | WiFi: ревизии платы, драйверы, прошивки |
+| [docs/BT-STATUS.md](docs/BT-STATUS.md) | Bluetooth: serdev, прошивки, выбор DTB |
+| [docs/AUDIO-STATUS.md](docs/AUDIO-STATUS.md) | Звук rk809: динамик, наушники, микрофон, BT |
+| [docs/CAMERA.md](docs/CAMERA.md) | Поворот USB-камеры: сервис и настройка |
+| [docs/reference/mainline-6.18/README.md](docs/reference/mainline-6.18/README.md) | Mainline 6.18: что работает (справочно, в сборке не участвует) |
+| [overlay/README.md](overlay/README.md) | Состав overlay и установка |
+
 ## Прекомпилированные артефакты
 
 Часть файлов в репозитории — готовые бинарники; исходников в дереве нет.

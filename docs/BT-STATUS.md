@@ -83,3 +83,7 @@ alias aic8800_fdrv_sdio aic8800_fdrv
 ```
 
 Расширение `radxa-aic8800` ставит модули с суффиксом `_sdio`; alias не нужен.
+
+---
+
+[← WiFi](WIFI-STATUS.md) · [Оглавление](../README.md#документация) · [Звук →](AUDIO-STATUS.md)

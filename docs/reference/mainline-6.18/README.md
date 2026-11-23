@@ -35,3 +35,7 @@ Custom Armbian support for the Yisheng YS-F66C industrial tablet (RK3566, 4+32G,
 ```bash
 cd ~/build/linux-6.18
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- rockchip/rk3566-ys-f66c.dtb
+
+---
+
+[← Камера](../../CAMERA.md) · [Оглавление](../../../README.md#документация) · [Overlay →](../../../overlay/README.md)

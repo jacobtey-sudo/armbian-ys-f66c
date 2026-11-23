@@ -143,3 +143,7 @@ BT у AIC8800 идёт по **UART** (вендор: `/dev/ttyS1`, т.е. uart1; 
 только `&uart2` (это консоль/earlycon) — uart1 для BT не настроен. Нужно:
 включить uart1 с нужным mux, добавить узлы reset/wake GPIO, поднять
 `aic8800_btlpm_sdio` и `hciattach` (см. `packages/bsp/aic8800/aic-bluetooth`).
+
+---
+
+[← Панель](PANEL-STATUS.md) · [Оглавление](../README.md#документация) · [Bluetooth →](BT-STATUS.md)

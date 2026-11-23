@@ -40,3 +40,7 @@
 
 - DTS: `kernel/rk35xx-vendor-6.1/dt/rk3566-ys-f66c.dts`
 - Вендорский DTS 4.19: `docs/reference/vendor-4.19/rk3566-ys-f66c.dts`
+
+---
+
+[← Оглавление](../README.md#документация) · [WiFi →](WIFI-STATUS.md)
