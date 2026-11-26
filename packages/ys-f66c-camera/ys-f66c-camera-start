@@ -1,6 +1,6 @@
 #!/bin/sh
 # Feeds a rotated copy of the built-in UVC camera into /dev/video10
-# (v4l2loopback virtual camera). All apps, including Kamoso, can use it.
+# (v4l2loopback virtual camera). All V4L2 applications can use it.
 . /etc/default/ys-f66c-camera
 
 # The sensor's YUYV modes have device-specific frame rates (e.g. 25 fps at

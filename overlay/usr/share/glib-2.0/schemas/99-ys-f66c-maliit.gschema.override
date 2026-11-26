@@ -1,4 +1,0 @@
-# Enable the Russian layout and a medium keyboard size for the Maliit OSK.
-[org.maliit.keyboard.maliit]
-enabled-languages = ['en', 'ru']
-device = 'ys-f66c-medium'

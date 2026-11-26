@@ -38,4 +38,4 @@ make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- rockchip/rk3566-ys-f66c.dtb
 
 ---
 
-[← Камера](../../CAMERA.md) · [Оглавление](../../../README.md#документация) · [Overlay →](../../../overlay/README.md)
+[← Камера](../../CAMERA.md) · [Оглавление](../../../README.md#документация)

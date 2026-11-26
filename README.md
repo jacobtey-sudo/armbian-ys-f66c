@@ -1,17 +1,29 @@
 # Armbian для планшета на плате Yisheng YS-F66C (Rockchip RK3566)
 
-Board-support (`userpatches`) для сборки Armbian с вендорским ядром Rockchip 6.1
-и рабочим железом планшета на плате YS-F66C.
+Board-support (`userpatches`) и консольная база Armbian для планшета на
+Yisheng YS-F66C с вендорским ядром Rockchip 6.1.
 
-**English TL;DR:** Board support (`userpatches`) for the Yisheng YS-F66C RK3566
-board. Clone the Armbian build framework (pinned commit), clone this repo as
-`userpatches/`, run `./compile.sh ys-f66c build`. See the build section below.
+**English TL;DR:** Board support and console base for the Yisheng YS-F66C
+RK3566 tablet. Clone the Armbian build framework (pinned commit), clone this
+repo as `userpatches/`, run `./compile.sh ys-f66c build`. The Plasma 6 desktop
+image is built from
+[armbian-ys-f66c-plasma6](https://github.com/jacobtey-sudo/armbian-ys-f66c-plasma6).
 
 **Готовый образ:** сборка с рабочим столом Plasma 6 — в
 [armbian-ys-f66c-plasma6](https://github.com/jacobtey-sudo/armbian-ys-f66c-plasma6/releases).
-Она собрана из этого board support; отдельная сборка не нужна.
+Она собрана из этого board support.
 
 ---
+
+## Разделение с десктопом
+
+| Репозиторий | Содержимое | Сборка |
+|---|---|---|
+| этот репозиторий | DTS, U-Boot, патчи ядра, железные хуки и сервисы, консольная база | `BUILD_DESKTOP=no` |
+| [armbian-ys-f66c-plasma6](https://github.com/jacobtey-sudo/armbian-ys-f66c-plasma6) | board-конфиг Plasma 6, overlay, KDE/SDDM-хуки, Mesa и FlClash | `BUILD_DESKTOP=yes` |
+
+Этот репозиторий не ставит рабочий стол. Desktop-пакеты, overlay и
+KDE-настройки живут в `armbian-ys-f66c-plasma6`.
 
 ## Железо
 
@@ -25,7 +37,7 @@ board. Clone the Armbian build framework (pinned commit), clone this repo as
 | WiFi / BT | две ревизии: AP6212 (BCM43430A1, SDIO `02d0`) или AIC8800D80 (SDIO `c8a1`) |
 | Ethernet | IP101GR |
 | Камера | внутренняя **USB UVC** (`1b17:0211` / `0bda:2161`) за хабом `1a40:0101` |
-| Кнопка питания | GPIO-кнопка → меню завершения работы KDE |
+| Кнопка питания | GPIO-кнопка |
 | Загрузка | SD-карта или eMMC |
 
 MIPI-камер (GC2145 / OV5648) на плате **нет** — они не распаяны.
@@ -42,19 +54,9 @@ MIPI-камер (GC2145 / OV5648) на плате **нет** — они не р�
 - [x] USB-камера (UVC): повёрнутая виртуальная камера `/dev/video10`
 - [x] Датчик температуры (TSADC) и троттлинг CPU/GPU
 - [x] USB host (в т.ч. OTG-порт в режиме host)
-- [x] Кнопка питания → меню «Завершение работы»
 - [x] Установка на eMMC
 - [x] Уникальное имя хоста (несколько планшетов в одной сети)
-- [x] KDE Plasma (SDDM)
-
-## Планируется: только board support и консоль
-
-Сейчас этот репозиторий собирает десктоп KDE сам, а `config-ys-f66c.conf`
-указывает на `noble` (Plasma 5) — эту сборку больше не поддерживают.
-Поддерживаемый образ с Plasma 6 собирает
-[armbian-ys-f66c-plasma6](https://github.com/jacobtey-sudo/armbian-ys-f66c-plasma6).
-Планируется оставить здесь board support и консольную базу, а десктоп
-перенести туда.
+- [x] Загрузка с microSD
 
 ## Требования к сборочной машине
 
@@ -86,10 +88,10 @@ git clone https://github.com/jacobtey-sudo/armbian-ys-f66c.git userpatches
 ./compile.sh ys-f66c build
 ```
 
-Готовый образ появится в `output/images/`:
+Готовый консольный образ появится в `output/images/`:
 
 ```
-output/images/Armbian-unofficial_*_Ys-f66c_noble_vendor_*_kde-plasma_desktop.img
+output/images/Armbian-unofficial_*_Ys-f66c_trixie_vendor_*.img
 ```
 
 Первая сборка — около 3 часов (ядро + rootfs). Повторная заметно
@@ -102,7 +104,7 @@ output/images/Armbian-unofficial_*_Ys-f66c_noble_vendor_*_kde-plasma_desktop.img
 
 ```bash
 # ВНИМАНИЕ: /dev/sdX — это именно ваша SD-карта, а не системный диск!
-sudo dd if=output/images/Armbian-..._kde-plasma_desktop.img \
+sudo dd if=output/images/Armbian-..._trixie_vendor_*.img \
         of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
@@ -132,27 +134,12 @@ sudo armbian-install --target /dev/mmcblk0 --boot emmc --fs ext4 --yes
 `/etc/hostname` содержит значение по умолчанию `ys-f66c`, поэтому имя,
 заданное вручную, не перезаписывается.
 
-## Mesa и Kamoso
-
-Mali-G52 (Panfrost) в Mesa 25.0.7 из trixie ломает стек в `libgallium`
-(Debian bug #1116427). Приложения на Qt5 GL падают при запуске — например,
-Kamoso: `*** stack smashing detected ***`, следом `SIGABRT` или `SIGSEGV`.
-Исправление вошло в Mesa 25.2. `customize-image.sh` ставит Mesa из
-`trixie-backports` (сейчас 26.1.6) и правит битый список файлов dpkg, из-за
-которого установка падает.
-
-Проверка версии:
-
-```sh
-dpkg -l mesa-libgallium | tail -1
-```
-
 ## Что лежит в репозитории
 
 | Путь | Назначение |
 |---|---|
-| `config-ys-f66c.conf` | Параметры сборки: BOARD, BRANCH, RELEASE, KDE |
-| `config/boards/ys-f66c.csc` | Описание платы: DTB, WiFi/BT, U-Boot, хук кнопки питания |
+| `config-ys-f66c.conf` | Параметры сборки: BOARD, BRANCH, RELEASE, консоль |
+| `config/boards/ys-f66c.csc` | Описание платы: DTB, WiFi/BT, U-Boot, железные хуки |
 | `kernel/rk35xx-vendor-6.1/dt/rk3566-ys-f66c.dts` | Device Tree платы |
 | `kernel/rk35xx-vendor-6.1/0000.patching_config.yaml` | Настройка патчей ядра |
 | `bootenv/ys-f66c.txt` | bootenv: UART-лог, earlycon |
@@ -160,11 +147,9 @@ dpkg -l mesa-libgallium | tail -1
 | `docs/CAMERA.md` | Поворот камеры: сервис, настройка, ограничения |
 | `packages/` | Исходник v4l2loopback и файлы сервиса камеры |
 | `docs/reference/` | Справочные DTS/патчи других веток (в сборке не участвуют) |
-| `overlay/` | Файлы образа: настройки KDE и Maliit, звук, сервисы (см. `overlay/README.md`) |
 
 `config-example.conf` — стандартный шаблон Armbian. `customize-image.sh` —
-рабочий хук образа: копирует overlay, включает сервисы, ставит FlClash и
-обновляет Mesa из `trixie-backports`.
+хук образа: правит битый список файлов dpkg в trixie.
 
 ## Документация
 
@@ -176,7 +161,6 @@ dpkg -l mesa-libgallium | tail -1
 | [docs/AUDIO-STATUS.md](docs/AUDIO-STATUS.md) | Звук rk809: динамик, наушники, микрофон, BT |
 | [docs/CAMERA.md](docs/CAMERA.md) | Поворот USB-камеры: сервис и настройка |
 | [docs/reference/mainline-6.18/README.md](docs/reference/mainline-6.18/README.md) | Mainline 6.18: что работает (справочно, в сборке не участвует) |
-| [overlay/README.md](overlay/README.md) | Состав overlay и установка |
 
 ## Прекомпилированные артефакты
 
@@ -186,8 +170,6 @@ dpkg -l mesa-libgallium | tail -1
 |---|---|
 | `packages/v4l2loopback-*.ko` | Запасной модуль виртуальной камеры; используется, только если сборка из `packages/v4l2loopback-0.13.2.tar.gz` не удалась |
 | `packages/ys-f66c-misc-gpio/misc-gpio-*.ko` | То же для драйвера MCU (исходник `misc-gpio.c` рядом) |
-| `overlay/.../appletdecoration/libappletdecorationplugin.so` | Плагин Window Buttons, собран под arm64 из upstream 0.14.0 |
-| `overlay/.../ksystemstats/ksystemstats_plugin_disk.so` | ksystemstats 6.3.4 с патчем для раздела данных eMMC |
 | `docs/YS-F66C Specifications (Chinese).pdf` | Спецификация платы от производителя (китайский язык). В открытом доступе её нет — хранится здесь как единственный источник |
 
 ## Ключевые исправления
@@ -222,11 +204,6 @@ dpkg -l mesa-libgallium | tail -1
 `ys-f66c-camera-rotate` пишет повёрнутую картинку в `/dev/video10`.
 Подробности — `docs/CAMERA.md`.
 
-### Кнопка питания
-powerdevil: `PowerButtonAction=16` (`PromptLogoutDialog`) в
-`/etc/xdg/powerdevilrc` и `/etc/skel/.config/powerdevilrc`.
-Короткое нажатие открывает меню завершения работы KDE.
-
 ### Ядро
 Vendor 6.1.172, закреплён на коммите
 `a21efefcf2b5731d1df0505ddf725af6e5530cfb`.
@@ -249,7 +226,7 @@ Vendor 6.1.172, закреплён на коммите
 
 ## Известные проблемы
 
-- **HDMI + встроенный экран одновременно**: на текущем образе (Plasma 6)
+- **HDMI + встроенный экран одновременно**: на десктопном образе (Plasma 6)
   не проверялось; используйте один выход.
 - MIPI-камер нет; работает только USB-камера.
 - Видеозвонки через PipeWire (браузер) могут брать сырую камеру без
