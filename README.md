@@ -7,6 +7,10 @@ Board-support (`userpatches`) для сборки Armbian с вендорски�
 board. Clone the Armbian build framework (pinned commit), clone this repo as
 `userpatches/`, run `./compile.sh ys-f66c build`. See the build section below.
 
+**Готовый образ:** сборка с рабочим столом Plasma 6 — в
+[armbian-ys-f66c-plasma6](https://github.com/jacobtey-sudo/armbian-ys-f66c-plasma6/releases).
+Она собрана из этого board support; отдельная сборка не нужна.
+
 ---
 
 ## Железо
